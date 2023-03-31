@@ -1,6 +1,6 @@
 import { RegisterCollection } from "./registerCollection.js";
 
 let test = new RegisterCollection()
-test.setRegister(10, 0xF)
+test.setRegister(0, 0xF)
 
-console.log(test)
+console.log(test.getRegister(0))
