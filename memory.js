@@ -2,38 +2,38 @@ class MemoryBlock {
     constructor(size) {
         this.size = size
         this.data = new Array(this.size);
-        for(let i = 0; i < this.data.length; i++){
+        for (let i = 0; i < this.data.length; i++) {
             this.data[i] = 0;
         }
     }
 
     setData(location, value) {
-        try{
-            if(value > 255 || value < 0){
+        try {
+            if (value > 255 || value < 0) {
                 throw new Error("Value Must Be Between 0x00 and 0xFF");
             }
-            else if(location > this.size || location < 0){
+            else if (location > this.size || location < 0) {
                 throw new Error("Location Must Be Between 0 and " + String(this.size - 1));
             }
-            else{
+            else {
                 this.data[location] = value;
             }
         }
-        catch (e){
+        catch (e) {
             errorHandler(e);
         }
     }
 
-    getData(location){
-        try{
-            if(location > 7 || location < 0){
+    getData(location) {
+        try {
+            if (location > 7 || location < 0) {
                 throw new Error("Location Must Be Between 0 and " + String(this.size - 1));
             }
-            else{
+            else {
                 return this.data[location];
             }
         }
-        catch (e){
+        catch (e) {
             errorHandler(e);
         }
     }
@@ -49,37 +49,37 @@ class RomBank {
         }
     }
 
-    changeBank(bank){
+    changeBank(bank) {
         this.selectedRomBank = bank;
     }
 
     setData(location, value) {
-        try{
-            if(value > 255 || value < 0){
+        try {
+            if (value > 255 || value < 0) {
                 throw new Error("Value Must Be Between 0x00 and 0xFF");
             }
-            else if(location > this.size || location < 0){
+            else if (location > this.size || location < 0) {
                 throw new Error("Location Must Be Between 0 and " + String(this.size - 1));
             }
-            else{
+            else {
                 this.banks[this.selectedRomBank].data[location] = value;
             }
         }
-        catch (e){
+        catch (e) {
             errorHandler(e);
         }
     }
 
-    getData(location){
-        try{
-            if(location > 7 || location < 0){
+    getData(location) {
+        try {
+            if (location > 7 || location < 0) {
                 throw new Error("Location Must Be Between 0 and " + String(this.size - 1));
             }
-            else{
+            else {
                 return thisbanks[this.selectedRomBank].data[location];
             }
         }
-        catch (e){
+        catch (e) {
             errorHandler(e);
         }
     }
@@ -130,10 +130,41 @@ export class Memory {
     }
 
     readMemory(location) {
-
+        try {
+            if (location < 0x4000)
+                return this.romZero.getData(location);
+            else if (location < 0x8000)
+                return this.romBank.getData(location - 0x4000)
+            else if (location < 0xA000)
+                return this.vram.getData(location - 0x8000);
+            else if (location < 0xC000)
+                return this.ram.getData(location - 0xA000);
+            else if (location < 0xE000)
+                return this.wram.getData(location - 0xC000);
+            else if (location < 0xFE00)
+                throw new Error("Invalid Location");
+            else if (location < 0xFEA0)
+                return this.oam.getData(location - 0xFE00);
+            else if (location < 0xFF00)
+                throw new Error("Invalid Location");
+            else if (location < 0xFF80)
+                return this.io.getData(location - 0xFF00);
+            else if (location < 0xFFFF)
+                return this.hram.getData(location - 0xFF80);
+            else
+                return this.ie.getData(0);
+        }
+        catch (e) {
+            errorHandler(e);
+        }
     }
 
     writeMemory(location, value) {
+        try {
 
+        }
+        catch (e) {
+            errorHandler(e);
+        }
     }
 }

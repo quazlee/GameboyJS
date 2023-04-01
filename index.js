@@ -6,7 +6,6 @@ test.setRegister(0, 0xF)
 
 let cpu = new Cpu()
 
-cpu.memory.romZero.data[0] = 5;
+cpu.memory.io.data[0] = 111;
 
-
-console.log(cpu.memory.romZero.data[0])
+console.log(cpu.memory.readMemory(0xFF00))
