@@ -1,11 +1,9 @@
-import { RegisterCollection } from "./registerCollection.js";
-import { Cpu } from "./cpu.js";
+import { Gameboy } from "./gameboy.js"
 
-let test = new RegisterCollection()
-test.setRegister(0, 0xF)
+let gameboy = new Gameboy();
 
-let cpu = new Cpu()
-
-cpu.memory.io.data[0] = 111;
-
-console.log(cpu.memory.readMemory(0xFF00))
+gameboy.cpu.registers.data[0] = 0
+gameboy.cpu.registers.data[1] = 34
+gameboy.cpu.registers.decRegister(0);
+console.log(gameboy.cpu.registers.data[0]);
+console.log(gameboy.cpu.registers.data[1]);

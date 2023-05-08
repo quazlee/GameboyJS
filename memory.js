@@ -86,8 +86,6 @@ class RomBank {
 
 }
 
-
-
 export class Memory {
     constructor() {
         this.ramEnabled = false;
