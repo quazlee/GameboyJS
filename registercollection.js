@@ -1,14 +1,25 @@
 import { errorHandler } from "./errorhandler.js";
 
+const registerNames = {
+    B: 0,
+    C: 1,
+    D: 2,
+    E: 3,
+    H: 4,
+    L: 5,
+    A: 7,
+    F: 8
+}
+
 export class RegisterCollection {
     constructor() {
-        this.data = new Array(8)
+        this.data = new Array(9)
         for (let i = 0; i < this.data.length; i++) {
             this.data[i] = 0;
         }
     }
 
-    /**Register is a value 0-7 corresponding to {B, C, D, E, H, L, A, F}.
+    /**Register is a value 0-8 corresponding to {B, C, D, E, H, L, (HL), A, F}.
      * Value is an unsigned int 0-255 or 0x00-0xFF.
     */
     setRegister(register, value) {
@@ -25,10 +36,10 @@ export class RegisterCollection {
         }
     }
 
-    /**Register is a value 0-7 corresponding to {B, C, D, E, H, L, A, F}.
+    /**Register is a value 0-8 corresponding to {B, C, D, E, H, L, (HL), A, F}.
      * Value is an unsigned int 0-255 or 0x00-0xFF.
     */
-    setRegisterDouble(registerHigh, registerLow, valueLow, valueHigh) {
+    setRegisterDouble(registerHigh, registerLow, valueHigh, valueLow) {
         try {
             if (valueLow > 255 || valueLow < 0) {
                 throw new Error("Value Must Be Between 0x00 and 0xFF");
@@ -80,17 +91,17 @@ export class RegisterCollection {
         }
     }
 
-    addA(value){
-        let oldValue = this.data[6]
-        this.data[6] += value;
-        this.assignZero(this.data[6]);
-        this.clearFlag(6);
-        this.assignHalfcarryAdd(oldValue, value);
-        this.assignCarry(oldValue, value);
-    }
+    // addA(value){
+    //     let oldValue = this.data[6]
+    //     this.data[6] += value;
+    //     this.assignZero(this.data[6]);
+    //     this.clearFlag(6);
+    //     this.assignHalfcarryAdd(oldValue, value);
+    //     this.assignCarry(oldValue, value);
+    // }
 
     addHL(value){
-        let oldValue = this.getRegisterDouble(4, 5)
+        let oldValue = this.getRegisterDouble(H, L)
         let newValue = oldValue + value;
         if (newValue > 65535) {
             newValue -= 65536;
@@ -151,11 +162,11 @@ export class RegisterCollection {
 
     rotateRightA() {
         let carry = getCarry();
-        if (this.data[7] & 1)
+        if (this.data[A] & 1)
             setCarry();
         else
             clearCarry();
-        this.data[7] = (this.data[7] >> 1 | (carry << 7));
+        this.data[A] = (this.data[A] >> 1 | (carry << 7));
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
@@ -163,98 +174,98 @@ export class RegisterCollection {
 
     rotateLeftA() {
         let carry = getCarry();
-        if (this.data[7] & 1)
+        if (this.data[A] & 1)
             setCarry();
         else
             clearCarry();
-        this.data[7] = (this.data[7] << 1 | (carry));
+        this.data[A] = (this.data[A] << 1 | (carry));
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
     }
 
     rotateRightCircularA() {
-        this.data[7] = ((this.data[7] >> 1) | (this.data[7] << 7));
+        this.data[A] = ((this.data[A] >> 1) | (this.data[A] << 7));
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
-        assignCarryShiftRight(this.data[7]);
+        assignCarryShiftRight(this.data[A]);
     }
 
     rotateLeftCircularA() {
-        this.data[7] = ((this.data[7] << 1) | (this.data[7] >> 7));
+        this.data[A] = ((this.data[A] << 1) | (this.data[A] >> 7));
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
-        assignCarryShiftRight(this.data[7]);
+        assignCarryShiftRight(this.data[A]);
     }
 
-    //FLAG FUCNTIONS START
-    setFlag(flag) {
-        this.data[7] |= 1 << flag;
-    }
+    // //FLAG FUCNTIONS START
+    // setFlag(flag) {
+    //     this.data[7] |= 1 << flag;
+    // }
 
-    clearFlag(flag) {
-        this.data[7] &= 1 << flag;
-    }
+    // clearFlag(flag) {
+    //     this.data[7] &= 1 << flag;
+    // }
 
-    getFlag(flag) {
-        return (this.data[7] >> flag) & 1;
-    }
+    // getFlag(flag) {
+    //     return (this.data[7] >> flag) & 1;
+    // }
 
-    assignZero(value) {
-        if (value == 0)
-            this.setFlag(7);
-        else
-            this.clearFlag(7);
-    }
+    // assignZero(value) {
+    //     if (value == 0)
+    //         this.setFlag(7);
+    //     else
+    //         this.clearFlag(7);
+    // }
 
-    assignHalfcarryAdd(value1, value2) {
-        if (((value1 & 0xf) + (value2 & 0xf)) & 0x10)
-            this.setFlag(5);
-        else
-            this.clearFlag(5);
-    }
+    // assignHalfcarryAdd(value1, value2) {
+    //     if (((value1 & 0xf) + (value2 & 0xf)) & 0x10)
+    //         this.setFlag(5);
+    //     else
+    //         this.clearFlag(5);
+    // }
 
-    assignHalfcarryAddDouble(value1, value2) {
-        if (((value1 & 0xff) + (value2 & 0xff)) & 0x0100)
-            this.setFlag(5);
-        else
-            this.clearFlag(5);
-    }
+    // assignHalfcarryAddDouble(value1, value2) {
+    //     if (((value1 & 0xff) + (value2 & 0xff)) & 0x0100)
+    //         this.setFlag(5);
+    //     else
+    //         this.clearFlag(5);
+    // }
 
-    assignHalfcarrySub(value1, value2) {
-        if (((value1 & 0xf) - (value2 & 0xf)) & 0x10)
-            this.setFlag(5);
-        else
-            this.clearFlag(5);
-    }
-    assignHalfcarrySubDouble(value1, value2) {
-        if (((value1 & 0xff) - (value2 & 0xff)) & 0x0100)
-            this.setFlag(5);
-        else
-            this.clearFlag(5);
-    }
+    // assignHalfcarrySub(value1, value2) {
+    //     if (((value1 & 0xf) - (value2 & 0xf)) & 0x10)
+    //         this.setFlag(5);
+    //     else
+    //         this.clearFlag(5);
+    // }
+    // assignHalfcarrySubDouble(value1, value2) {
+    //     if (((value1 & 0xff) - (value2 & 0xff)) & 0x0100)
+    //         this.setFlag(5);
+    //     else
+    //         this.clearFlag(5);
+    // }
 
-    assignCarry(value1, value2) {
-        if (value1 < value2)
-            this.setFlag(4);
-        else
-            this.clearFlag(4);
-    }
+    // assignCarry(value1, value2) {
+    //     if (value1 < value2)
+    //         this.setFlag(4);
+    //     else
+    //         this.clearFlag(4);
+    // }
 
-    assignCarryShiftLeft(value) {
-        if (value & 0x01)
-            this.setFlag(4);
-        else
-            this.clearFlag(4);
-    }
-    assignCarryShiftRight(value) {
-        if (value & 0x80)
-            this.setFlag(4);
-        else
-            this.clearFlag(4);
-    }
+    // assignCarryShiftLeft(value) {
+    //     if (value & 0x01)
+    //         this.setFlag(4);
+    //     else
+    //         this.clearFlag(4);
+    // }
+    // assignCarryShiftRight(value) {
+    //     if (value & 0x80)
+    //         this.setFlag(4);
+    //     else
+    //         this.clearFlag(4);
+    // }
     //FLAG FUCNTIONS END
 
 }
