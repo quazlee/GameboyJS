@@ -80,8 +80,13 @@ export class RegisterCollection {
         }
     }
 
-    add(register, value){
-        this.data[register] += value;
+    addA(value){
+        let oldValue = this.data[6]
+        this.data[6] += value;
+        this.assignZero(this.data[6]);
+        this.clearFlag(6);
+        this.assignHalfcarryAdd(oldValue, value);
+        this.assignCarry(oldValue, value);
     }
 
     addHL(value){

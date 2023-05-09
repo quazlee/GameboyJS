@@ -320,7 +320,7 @@ export class Cpu {
                     this.tickClock(4);
                 }
                 else if (low < 0xE) {
-                    this.registers.setRegister(1, low);
+                    this.registers.setRegister(1, low - 8);
                     this.tickClock(4);
                 }
                 else if (low == 0xE) {
@@ -346,7 +346,7 @@ export class Cpu {
                     this.tickClock(4);
                 }
                 else if (low < 0xE) {
-                    this.registers.setRegister(3, low);
+                    this.registers.setRegister(3, low - 8);
                     this.tickClock(4);
                 }
                 else if (low == 0xE) {
@@ -372,7 +372,7 @@ export class Cpu {
                     this.tickClock(4);
                 }
                 else if (low < 0xE) {
-                    this.registers.setRegister(6, low);
+                    this.registers.setRegister(6, low - 8);
                     this.tickClock(4);
                 }
                 else if (low == 0xE) {
@@ -398,7 +398,7 @@ export class Cpu {
                     this.tickClock(8);
                 }
                 else if (low < 0xE) {
-                    this.registers.setRegister(6, low);
+                    this.registers.setRegister(6, low - 8);
                     this.tickClock(4);
                 }
                 else if (low == 0xE) {
@@ -407,6 +407,32 @@ export class Cpu {
                 }
                 else {
                     this.registers.setRegister(6, 6);
+                    this.tickClock(4);
+                }
+                break;
+            case 0x8:
+                if (low < 6) {
+                    this.registers.addA(low);
+                    this.tickClock(4);
+                }
+                else if (low == 0x6) {
+                    this.registers.addA(this.memory.readMemory(this.registers.getRegisterDouble(4,5)));
+                    this.tickClock(8);
+                }
+                else if (low == 0x7) {
+                    this.registers.addA(6);
+                    this.tickClock(4);
+                }
+                else if (low < 0xE) {
+                    this.registers.adcA(low - 8);
+                    this.tickClock(4);
+                }
+                else if (low == 0xE) {
+                    this.registers.adcA(this.memory.readMemory(this.registers.getRegisterDouble(4,5)));
+                    this.tickClock(8);
+                }
+                else {
+                    this.registers.adcA(6);
                     this.tickClock(4);
                 }
                 break;
