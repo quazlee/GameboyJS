@@ -201,71 +201,71 @@ export class RegisterCollection {
     }
 
     // //FLAG FUCNTIONS START
-    // setFlag(flag) {
-    //     this.data[7] |= 1 << flag;
-    // }
+    setFlag(flag) {
+        this.data[8] |= 1 << flag;
+    }
 
-    // clearFlag(flag) {
-    //     this.data[7] &= 1 << flag;
-    // }
+    clearFlag(flag) {
+        this.data[8] &= 1 << flag;
+    }
 
-    // getFlag(flag) {
-    //     return (this.data[7] >> flag) & 1;
-    // }
+    getFlag(flag) {
+        return (this.data[8] >> flag) & 1;
+    }
 
-    // assignZero(value) {
-    //     if (value == 0)
-    //         this.setFlag(7);
-    //     else
-    //         this.clearFlag(7);
-    // }
+    assignZero(value) {
+        if (value == 0)
+            this.setFlag(7);
+        else
+            this.clearFlag(7);
+    }
 
-    // assignHalfcarryAdd(value1, value2) {
-    //     if (((value1 & 0xf) + (value2 & 0xf)) & 0x10)
-    //         this.setFlag(5);
-    //     else
-    //         this.clearFlag(5);
-    // }
+    assignHalfcarryAdd(value1, value2) {
+        if (((value1 & 0xf) + (value2 & 0xf)) & 0x10)
+            this.setFlag(5);
+        else
+            this.clearFlag(5);
+    }
 
-    // assignHalfcarryAddDouble(value1, value2) {
-    //     if (((value1 & 0xff) + (value2 & 0xff)) & 0x0100)
-    //         this.setFlag(5);
-    //     else
-    //         this.clearFlag(5);
-    // }
+    assignHalfcarryAddDouble(value1, value2) {
+        if (((value1 & 0xff) + (value2 & 0xff)) & 0x0100)
+            this.setFlag(5);
+        else
+            this.clearFlag(5);
+    }
 
-    // assignHalfcarrySub(value1, value2) {
-    //     if (((value1 & 0xf) - (value2 & 0xf)) & 0x10)
-    //         this.setFlag(5);
-    //     else
-    //         this.clearFlag(5);
-    // }
-    // assignHalfcarrySubDouble(value1, value2) {
-    //     if (((value1 & 0xff) - (value2 & 0xff)) & 0x0100)
-    //         this.setFlag(5);
-    //     else
-    //         this.clearFlag(5);
-    // }
+    assignHalfcarrySub(value1, value2) {
+        if (((value1 & 0xf) - (value2 & 0xf)) & 0x10)
+            this.setFlag(5);
+        else
+            this.clearFlag(5);
+    }
+    assignHalfcarrySubDouble(value1, value2) {
+        if (((value1 & 0xff) - (value2 & 0xff)) & 0x0100)
+            this.setFlag(5);
+        else
+            this.clearFlag(5);
+    }
 
-    // assignCarry(value1, value2) {
-    //     if (value1 < value2)
-    //         this.setFlag(4);
-    //     else
-    //         this.clearFlag(4);
-    // }
+    assignCarry(value1, value2) {
+        if (value1 < value2)
+            this.setFlag(4);
+        else
+            this.clearFlag(4);
+    }
 
-    // assignCarryShiftLeft(value) {
-    //     if (value & 0x01)
-    //         this.setFlag(4);
-    //     else
-    //         this.clearFlag(4);
-    // }
-    // assignCarryShiftRight(value) {
-    //     if (value & 0x80)
-    //         this.setFlag(4);
-    //     else
-    //         this.clearFlag(4);
-    // }
+    assignCarryShiftLeft(value) {
+        if (value & 0x01)
+            this.setFlag(4);
+        else
+            this.clearFlag(4);
+    }
+    assignCarryShiftRight(value) {
+        if (value & 0x80)
+            this.setFlag(4);
+        else
+            this.clearFlag(4);
+    }
     //FLAG FUCNTIONS END
 
 }
