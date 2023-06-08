@@ -87,7 +87,10 @@ class RomBank {
 }
 
 export class Memory {
-    constructor() {
+    constructor(romInput) {
+        this.romInput = romInput;
+        const exponent = this.romInput[0x0148];
+        this.numRomBanks = (2^exponent) - 1;
         this.ramEnabled = false;
         this.bankMode = false;
 
@@ -95,7 +98,7 @@ export class Memory {
         this.romZero = new MemoryBlock(16384);
 
         /** 0x4000-0x7FFF */
-        this.romBank = new RomBank();
+        this.romBank = new RomBank(this.numRomBanks);
 
         /** 0x8000-0x9FFF */
         this.vram = new MemoryBlock(8192);
@@ -125,6 +128,8 @@ export class Memory {
 
         /** 0xFFFF */
         this.ie = new MemoryBlock(1);
+
+        this.readRom();
     }
 
     readMemory(location) {
@@ -163,6 +168,29 @@ export class Memory {
         }
         catch (e) {
             errorHandler(e);
+        }
+    }
+
+    readRom(){
+        const romArrayIndex = 0;
+        const currentBankIndex = 0;
+        const currentBank = 0;
+        while(romArrayIndex < this.romInput.length){
+            if(romArrayIndex < 16384){
+                this.romZero.setData(romArrayIndex, this.romInput[romArrayIndex]);
+            }
+            else{
+                this.romBank.setData(currentBankIndex, this.romInput[romArrayIndex])
+                currentBankIndex++;
+            }
+
+            romArrayIndex++;
+
+            if(currentBankIndex == 16383){
+                currentBankIndex = 0;
+                currentBank++;
+                this.romBank.changeBank(currentBank);
+            }
         }
     }
 }

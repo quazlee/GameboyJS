@@ -1,9 +1,21 @@
 import { Gameboy } from "./gameboy.js"
 
-let gameboy = new Gameboy();
+const selectedRom = document.getElementById("romInput");
+selectedRom.addEventListener("change", startGameboy, false);
 
-gameboy.cpu.registers.data[0] = 0
-gameboy.cpu.registers.data[1] = 34
-gameboy.cpu.registers.decRegister(0);
-console.log(gameboy.cpu.registers.data[0]);
-console.log(gameboy.cpu.registers.data[1]);
+async function readRom(rom) {
+  let fileReader = new FileReader();
+  
+  let result = null;
+  fileReader.onload = (e) => {
+    result = e.target.result;
+  }
+  fileReader.readAsArrayBuffer(rom);
+  return new Uint8Array(result);
+}
+
+function startGameboy(){
+    const rom = this.files[0];
+    const romData = readRom(rom).then();
+    const gameboy = new Gameboy(romData);
+}

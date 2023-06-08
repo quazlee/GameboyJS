@@ -11,6 +11,8 @@ const registerNames = {
     F: 8
 }
 
+
+
 export class RegisterCollection {
     constructor() {
         this.data = new Array(9)
@@ -18,6 +20,39 @@ export class RegisterCollection {
             this.data[i] = 0;
         }
     }
+
+    sum(value1, value2) {
+        let sum = value1 + value2;
+        if (sum > 255) {
+            sum -= 255;
+        }
+        return sum;
+    }
+
+    difference(value1, value2) {
+        let difference = value1 - value2;
+        if (difference < 0) {
+            difference += 255;
+        }
+        return difference;
+    }
+
+    sumDouble(value1, value2) {
+        let sum = value1 + value2;
+        if (sum > 65535) {
+            sum -= 65536;
+        }
+        return sum;
+    }
+
+    differenceDouble(value1, value2) {
+        let difference = value1 - value2;
+        if (difference < 0) {
+            difference += 65536;
+        }
+        return difference;
+    }
+
 
     /**Register is a value 0-8 corresponding to {B, C, D, E, H, L, (HL), A, F}.
      * Value is an unsigned int 0-255 or 0x00-0xFF.
@@ -91,21 +126,18 @@ export class RegisterCollection {
         }
     }
 
-    // addA(value){
-    //     let oldValue = this.data[6]
-    //     this.data[6] += value;
-    //     this.assignZero(this.data[6]);
-    //     this.clearFlag(6);
-    //     this.assignHalfcarryAdd(oldValue, value);
-    //     this.assignCarry(oldValue, value);
-    // }
+    addA(targetRegister) {
+        let oldValue = this.data[A]
+        this.data[A] = sum(oldValue, this.data[targetRegister]);
+        this.assignZero(this.data[A]);
+        this.clearFlag(6);
+        this.assignHalfcarryAdd(oldValue, value);
+        this.assignCarry(oldValue, value);
+    }
 
-    addHL(value){
+    addHL(value) {
         let oldValue = this.getRegisterDouble(H, L)
-        let newValue = oldValue + value;
-        if (newValue > 65535) {
-            newValue -= 65536;
-        }
+        this.data[HL] = sum(oldValue, value)
         this.clearFlag(6);
         this.assignHalfcarryAddDouble(oldValue, value);
         this.assignCarry(oldValue, value);
@@ -113,10 +145,7 @@ export class RegisterCollection {
 
     incRegister(register) {
         let oldValue = this.data[register];
-        let newValue = this.data[register]++;
-        if (newValue > 65535) {
-            newValue -= 65536;
-        }
+        let newValue = sum(oldValue, 1);
         this.data[register] = newValue;
         this.assignZero(newValue);
         this.clearFlag(7);
@@ -127,20 +156,14 @@ export class RegisterCollection {
         let high = this.data[registerHigh];
         let low = this.data[registerLow];
         let combined = (high << 8) | low;
-        combined++;
-        if (combined > 65535) {
-            combined -= 65536;
-        }
+        combined = this.sumDouble(combined, 1);
         this.data[registerHigh] = (combined & 0xFF00) >> 8;
         this.data[registerLow] = combined & 0x00FF;
     }
 
     decRegister(register) {
         let oldValue = this.data[register];
-        let newValue = this.data[register]--;
-        if (newValue < 0) {
-            newValue += 65536;
-        }
+        let newValue = this.difference(this.data[register], 1);
         this.data[register] = newValue;
         this.assignZero(newValue);
         this.clearFlag(7);
@@ -151,7 +174,7 @@ export class RegisterCollection {
         let high = this.data[registerHigh];
         let low = this.data[registerLow];
         let combined = (high << 8) | low;
-        combined--;
+        combined - 1;
         if (combined < 0) {
             combined += 65536;
         }
