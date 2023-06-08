@@ -11,8 +11,6 @@ const registerNames = {
     F: 8
 }
 
-
-
 export class RegisterCollection {
     constructor() {
         this.data = new Array(9)

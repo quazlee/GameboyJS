@@ -28,7 +28,7 @@ export class Cpu {
         return currentOpcode;
     }
 
-    decode() {
+    decodeAndExecute() {
         let currentOpcode = 0;
         try {
             if (currentOpcode > 255 || currentOpcode < 0) {
@@ -46,7 +46,7 @@ export class Cpu {
         let low = currentOpcode & 0xF;
 
         //get the (HL) value
-        this.registers.setRegister(this.memory.readMemory(this.registers.getRegisterDouble(H, L)));
+        this.registers.setRegister(6, this.memory.readMemory(this.registers.getRegisterDouble(H, L)));
 
         switch (high) {
             case 0x0:
