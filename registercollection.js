@@ -133,6 +133,10 @@ export class RegisterCollection {
         this.assignCarry(oldValue, value);
     }
 
+    adcA(targetRegister){
+        
+    }
+
     addHL(value) {
         let oldValue = this.getRegisterDouble(H, L)
         this.data[HL] = sum(oldValue, value)

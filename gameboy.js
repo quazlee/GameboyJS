@@ -6,4 +6,8 @@ export class Gameboy {
         this.cpu = new Cpu(romArray);
         this.gpu = new Gpu();
     }
+
+    mainLoop(){
+        
+    }
 }

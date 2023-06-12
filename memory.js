@@ -1,3 +1,4 @@
+import { errorHandler } from "./errorhandler.js";
 class MemoryBlock {
     constructor(size) {
         this.size = size
@@ -89,7 +90,7 @@ class RomBank {
 export class Memory {
     constructor(romInput) {
         this.romInput = romInput;
-        const exponent = this.romInput[0x0148];
+        let exponent = this.romInput[0x0148];
         this.numRomBanks = (2^exponent) - 1;
         this.ramEnabled = false;
         this.bankMode = false;
@@ -172,9 +173,9 @@ export class Memory {
     }
 
     readRom(){
-        const romArrayIndex = 0;
-        const currentBankIndex = 0;
-        const currentBank = 0;
+        let romArrayIndex = 0;
+        let currentBankIndex = 0;
+        let currentBank = 0;
         while(romArrayIndex < this.romInput.length){
             if(romArrayIndex < 16384){
                 this.romZero.setData(romArrayIndex, this.romInput[romArrayIndex]);
