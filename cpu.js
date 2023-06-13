@@ -29,14 +29,11 @@ export class Cpu {
         return currentOpcode;
     }
 
-    decodeAndExecute() {
-        let currentOpcode = 0;
+    decode() {
+        let currentOpcode = this.fetch();
         try {
             if (currentOpcode > 255 || currentOpcode < 0) {
                 throw new Error("Value Must Be Between 0x00 and 0xFF");
-            }
-            else {
-                currentOpcode = this.fetch();
             }
         }
         catch (e) {
@@ -46,9 +43,15 @@ export class Cpu {
         let high = currentOpcode >> 4;
         let low = currentOpcode & 0xF;
 
+        return [high, low];
+    }
+
+    execute() {
+        let [high, low] = this.decode();
+
         //get the (HL) value
         this.registers.setRegister(6, this.memory.readMemory(this.registers.getRegisterDouble(H, L)));
-        if (high != 0xCB) {
+        if (((high << 4) | low) != 0xCB) {
             switch (high) {
                 case 0x0:
                     switch (low) {
@@ -477,7 +480,7 @@ export class Cpu {
                     }
                     else {
                         this.registers.cpA(low - 8);//TODO
-                        if (low == 0xE) {
+                        if (low == 0x6) {
                             this.tickClock(8);
                         }
                         else {
@@ -490,8 +493,139 @@ export class Cpu {
 
             }
         }
-        else{
-            
+        else {
+            [high, low] = this.decode();
+            switch (high) {
+                case 0x0:
+                    this.registers.rotateLeftCircular(low);
+                    if (low == 0x6) {
+                        this.tickClock(16);
+                    }
+                    else {
+                        this.tickClock(8);
+                    }
+                    break
+                case 0x1:
+                    if (low == 0x6) {
+                        this.tickClock(16);
+                    }
+                    else {
+                        this.tickClock(8);
+                    }
+                    break
+                case 0x2:
+                    if (low == 0x6) {
+                        this.tickClock(16);
+                    }
+                    else {
+                        this.tickClock(8);
+                    }
+                    break
+                case 0x3:
+                    if (low == 0x6) {
+                        this.tickClock(16);
+                    }
+                    else {
+                        this.tickClock(8);
+                    }
+                    break
+                case 0x4:
+                    if (low < 8) {
+                        this.bit(0, low);
+                    }
+                    else {
+                        this.bit(1, low - 8);
+                    }
+                    break
+                case 0x5:
+                    if (low < 8) {
+                        this.bit(2, low);
+                    }
+                    else {
+                        this.bit(3, low - 8);
+                    }
+                    break
+                case 0x6:
+                    if (low < 8) {
+                        this.bit(4, low);
+                    }
+                    else {
+                        this.bit(5, low - 8);
+                    }
+                    break
+                case 0x7:
+                    if (low < 8) {
+                        this.bit(6, low);
+                    }
+                    else {
+                        this.bit(7, low - 8);
+                    }
+                    break
+                case 0x8:
+                    if (low < 8) {
+                        this.res(0, low);
+                    }
+                    else {
+                        this.res(1, low - 8);
+                    }
+                    break
+                case 0x9:
+                    if (low < 8) {
+                        this.res(2, low);
+                    }
+                    else {
+                        this.res(3, low - 8);
+                    }
+                    break
+                case 0xA:
+                    if (low < 8) {
+                        this.res(4, low);
+                    }
+                    else {
+                        this.res(5, low - 8);
+                    }
+                    break
+                case 0xB:
+                    if (low < 8) {
+                        this.res(6, low);
+                    }
+                    else {
+                        this.res(7, low - 8);
+                    }
+                    break
+                case 0xC:
+                    if (low < 8) {
+                        this.set(0, low);
+                    }
+                    else {
+                        this.set(1, low - 8);
+                    }
+                    break
+                case 0xD:
+                    if (low < 8) {
+                        this.set(2, low);
+                    }
+                    else {
+                        this.set(3, low - 8);
+                    }
+                    break
+                case 0xE:
+                    if (low < 8) {
+                        this.set(4, low);
+                    }
+                    else {
+                        this.set(5, low - 8);
+                    }
+                    break
+                case 0xF:
+                    if (low < 8) {
+                        this.set(6, low);
+                    }
+                    else {
+                        this.set(7, low - 8);
+                    }
+                    break
+            }
         }
 
         this.memory.writeMemory(this.getRegisterDouble(H, L), this.getRegister(6))//Assign the new HL value back to register
@@ -509,6 +643,41 @@ export class Cpu {
         }
         else {
             this.tickClock(4);
+        }
+    }
+
+    bit(bit, register) {
+        let registerValue = this.registers.getRegister(register);
+        let bitValue = registerValue & (1 << bit);
+        this.registers.assignZero(bitValue);
+        this.registers.clearFlag(6);
+        this.registers.setFlag(5);
+        if (low == 0x6) {
+            this.tickClock(12);
+        }
+        else {
+            this.tickClock(8);
+        }
+    }
+
+    res(bit, register){
+        let registerValue = this.registers.getRegister(register);
+        registerValue &=  ~(1 << bit);
+        if (low == 0x6) {
+            this.tickClock(16);
+        }
+        else {
+            this.tickClock(8);
+        }
+    }
+    set(bit, register){
+        let registerValue = this.registers.getRegister(register);
+        registerValue |=  (1 << bit);
+        if (low == 0x6) {
+            this.tickClock(16);
+        }
+        else {
+            this.tickClock(8);
         }
     }
 

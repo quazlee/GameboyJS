@@ -225,13 +225,61 @@ export class RegisterCollection {
         assignCarryShiftRight(this.data[A]);
     }
 
+    rotateRight(register) {
+        let registerValue = this.data[register]; 
+        let carry = getCarry();
+        if (registerValue & 1)
+            setCarry();
+        else
+            clearCarry();
+        registerValue = (registerValue >> 1 | (carry << 7));
+        this.data[register] = registerValue;
+        this.assignZero(registerValue);
+        this.clearFlag(6);
+        this.clearFlag(5);
+    }
+
+    rotateLeft(register) {
+        let registerValue = this.data[register]; 
+        let carry = getCarry();
+        if (registerValue & 1)
+            setCarry();
+        else
+            clearCarry();
+        this.registerValue = (this.registerValue << 1 | (carry));
+        this.data[register] = registerValue;
+        this.assignZero(registerValue);
+        this.clearFlag(6);
+        this.clearFlag(5);
+    }
+
+    rotateRightCircular(register) {
+        let registerValue = this.data[register]; 
+        registerValue = ((registerValue >> 1) | (registerValue << 7));
+        this.data[register] = registerValue;
+        this.clearFlag(7);
+        this.clearFlag(6);
+        this.clearFlag(5);
+        assignCarryShiftRight(registerValue);
+    }
+
+    rotateLeftCircular(register) {
+        let registerValue = this.data[register]; 
+        registerValue = ((registerValue << 1) | (registerValue >> 7));
+        this.data[register] = registerValue;
+        this.clearFlag(7);
+        this.clearFlag(6);
+        this.clearFlag(5);
+        assignCarryShiftRight(registerValue);
+    }
+
     // //FLAG FUCNTIONS START
     setFlag(flag) {
         this.data[8] |= 1 << flag;
     }
 
     clearFlag(flag) {
-        this.data[8] &= 1 << flag;
+        this.data[8] &= ~(1 << flag);
     }
 
     getFlag(flag) {
