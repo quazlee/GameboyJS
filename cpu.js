@@ -203,178 +203,201 @@ export class Cpu {
                                 break;
                             }
                         case 0x8:
-                            {//TODO: JUMP RELATIVE
+                            {
+                                jumpOffset = this.fetch();
+                                this.programCounter += jumpOffset;
+                                this.tickClock(12);
                                 break;
                             }
-                        //         case 0x9:
-                        //             this.registers.addHL(this.registers.getRegisterDouble(2, 3));
-                        //             this.tickClock(8);
-                        //             break;
-                        //         case 0xA:
-                        //             this.registers.setRegister(6, this.memory.readMemory(this.registers.getRegisterDouble(2, 3)))
-                        //             this.tickClock(8);
-                        //             break;
-                        //         case 0xB:
-                        //             this.registers.decRegisterDouble(2, 3);
-                        //             this.tickClock(8);
-                        //             break;
-                        //         case 0xC:
-                        //             this.registers.incRegister(3);
-                        //             this.tickClock(4);
-                        //             break;
-                        //         case 0xD:
-                        //             this.registers.decRegister(3);
-                        //             this.tickClock(4);
-                        //             break;
-                        //         case 0xE:
-                        //             this.registers.setRegister(3, this.fetch());
-                        //             this.tickClock(4);
-                        //             break;
-                        //         case 0xF:
-                        //             this.registers.rotateRightA();
-                        //             this.tickClock(4);
-                        //             break;
+                        case 0x9:
+                            {
+                                this.registers.addHL(this.registers.getRegisterDouble(registerID.D, registerID.E));
+                                this.tickClock(8);
+                                break;
+                            }
+                        case 0xA:
+                            {
+                                let value = this.memory.readMemory(this.registers.getRegisterDouble(registerID.D, registerID.E));
+                                this.registers.setRegister(registerID.A, value);
+                                this.tickClock(8);
+                                break;
+                            }
+                        case 0xB:
+                            this.registers.decRegisterDouble(registerID.D, registerID.E);
+                            this.tickClock(8);
+                            break;
+                        case 0xC:
+                            this.registers.incRegister(registerID.E);
+                            this.tickClock(4);
+                            break;
+                        case 0xD:
+                            this.registers.decRegister(registerID.E);
+                            this.tickClock(4);
+                            break;
+                        case 0xE:
+                            this.registers.setRegister(registerID.E, this.fetch());
+                            this.tickClock(4);
+                            break;
+                        case 0xF:
+                            this.registers.rotateRightA();
+                            this.tickClock(4);
+                            break;
                     }
                     break;
-                // case 0x2:
-                //     switch (low) {
-                //         case 0x0:
-                //             //TODO: JUMP RELATIVE
-                //             break;
-                //         case 0x1:
-                //             this.registers.setRegister(4, 5, this.fetch(), this.fetch());
-                //             this.tickClock(12);
-                //             break;
-                //         case 0x2:
-                //             this.memory.writeMemory(this.registers.getRegisterDouble(5, 6), this.registers.getRegister(6))
-                //             this.registers.incRegisterDouble(4, 5);
-                //             this.tickClock(8);
-                //             break;
-                //         case 0x3:
-                //             this.registers.incRegisterDouble(4, 5);
-                //             this.tickClock(8);
-                //             break;
-                //         case 0x4:
-                //             this.registers.incRegister(4);
-                //             this.tickClock(4);
-                //             break;
-                //         case 0x5:
-                //             this.registers.decRegister(4);
-                //             this.tickClock(4);
-                //             break;
-                //         case 0x6:
-                //             this.registers.setRegister(4, this.fetch());
-                //             this.tickClock(4);
-                //             break;
-                //         case 0x7:
-                //             //TODO: DAA
-                //             break;
-                //         case 0x8:
-                //             //TODO: JUMP RELATIVE
-                //             break;
-                //         case 0x9:
-                //             this.registers.addHL(this.registers.getRegisterDouble(4, 5));
-                //             this.tickClock(8);
-                //             break;
-                //         case 0xA:
-                //             this.registers.setRegister(5, this.memory.readMemory(this.registers.getRegisterDouble(5, 6)))
-                //             this.tickClock(8);
-                //             break;
-                //         case 0xB:
-                //             this.registers.decRegisterDouble(4, 5);
-                //             this.tickClock(8);
-                //             break;
-                //         case 0xC:
-                //             this.registers.incRegister(5);
-                //             this.tickClock(4);
-                //             break;
-                //         case 0xD:
-                //             this.registers.decRegister(5);
-                //             this.tickClock(4);
-                //             break;
-                //         case 0xE:
-                //             this.registers.setRegister(5, this.fetch());
-                //             this.tickClock(4);
-                //             break;
-                //         case 0xF:
-                //             //TODO: CPL
-                //             break;
-                //     }
-                // case 0x3:
-                //     switch (low) {
-                //         case 0x0:
-                //             //TODO: JUMP RELATIVE
-                //             break;
-                //         case 0x1:
-                //             {
-                //                 let low = this.fetch();
-                //                 let high = this.fetch();
-                //                 this.stackPointer = (high << 8) | low;
-                //                 this.tickClock(12);
-                //                 break;
-                //             }
-                //         case 0x2:
-                //             this.memory.writeMemory(this.registers.getRegisterDouble(4, 5), this.registers.getRegister(6))
-                //             this.registers.decRegisterDouble(4, 5);
-                //             this.tickClock(8);
-                //             break;
-                //         case 0x3:
-                //             this.stackPointer++;
-                //             this.tickClock(8);
-                //             break;
-                //         case 0x4:
-                //             {
-                //                 let oldValue = this.memory.readMemory(this.registers.getRegisterDouble(4, 5));
-                //                 this.registers.assignZero(oldValue);
-                //                 this.registers.clearFlag(6);
-                //                 this.registers.assignHalfcarryAddDouble(oldValue, 1);
-                //                 let newValue = oldValue++;
-                //                 if (newValue > 65535) {
-                //                     newValue -= 65536;
-                //                 }
-                //                 this.memory.writeMemory(this.registers.getRegisterDouble(4, 5), newValue);
-                //                 this.tickClock(12);
-                //                 break;
-                //             }
-                //         case 0x5:
-                //             {
-                //                 let oldValue = this.memory.readMemory(this.registers.getRegisterDouble(4, 5));
-                //                 this.registers.assignZero(oldValue);
-                //                 this.registers.clearFlag(6);
-                //                 this.registers.assignHalfcarrySubDouble(oldValue, 1);
-                //                 let newValue = oldValue--;
-                //                 if (newValue < 0) {
-                //                     newValue += 65536;
-                //                 }
-                //                 this.memory.writeMemory(this.registers.getRegisterDouble(4, 5), newValue);
-                //                 this.tickClock(12);
-                //                 break;
-                //             }
-                //         case 0x6:
-
-                //             break;
-                //         case 0x7:
-                //             //TODO: SCF
-                //             break;
-                //         case 0x8:
-                //             //TODO: JUMP RELATIVE
-                //             break;
-                //         case 0x9:
-                //             break;
-                //         case 0xA:
-                //             break;
-                //         case 0xB:
-                //             break;
-                //         case 0xC:
-                //             break;
-                //         case 0xD:
-                //             break;
-                //         case 0xE:
-                //             break;
-                //         case 0xF:
-                //             //TODO: CCF
-                //             break;
-                //     }
+                case 0x2:
+                    switch (low) {
+                        case 0x0:
+                            this.jumpRelativeConditional(!this.registers.getFlag(7));
+                            break;
+                        case 0x1:
+                            {
+                                let low = this.fetch();
+                                let high = this.fetch();
+                                this.registers.setRegisterDouble(registerID.H, registerID.L, high, low);
+                                this.tickClock(12);
+                                break;
+                            }
+                        case 0x2:
+                            {
+                                let location = this.registers.getRegisterDouble(registerID.H, registerID.L);
+                                this.registers.incRegisterDouble(registerID.H, registerID.L);
+                                let value = this.registers.getRegister(registerID.A);
+                                this.memory.writeMemory(location, value)
+                                this.tickClock(8);
+                                break;
+                            }
+                        case 0x3:
+                            {
+                                this.registers.incRegisterDouble(registerID.H, registerID.L);
+                                this.tickClock(8);
+                                break;
+                            }
+                        case 0x4:
+                            {
+                                this.registers.incRegister(registerID.H);
+                                this.tickClock(4);
+                                break;
+                            }
+                        case 0x5:
+                            {
+                                this.registers.decRegister(registerID.H);
+                                this.tickClock(4);
+                                break;
+                            }
+                        case 0x6:
+                            {
+                                this.registers.setRegister(registerID.H, this.fetch());
+                                this.tickClock(8);
+                                break;
+                            }
+                        case 0x7://TODO DAA
+                            break;
+                        case 0x8:
+                            this.jumpRelativeConditional(this.registers.getFlag(7));
+                            break;
+                        case 0x9:
+                            {
+                                this.registers.addHL(this.registers.getRegisterDouble(registerID.H, registerID.L));
+                                this.tickClock(8);
+                                break;
+                            }
+                        case 0xA:
+                            {
+                                let value = this.memory.readMemory(this.registers.getRegisterDouble(registerID.H, registerID.L));
+                                this.registers.incRegisterDouble(registerID.H, registerID.L);
+                                this.registers.setRegister(registerID.A, value);
+                                this.tickClock(8);
+                                break;
+                            }
+                        case 0xB:
+                            {
+                                this.registers.decRegisterDouble(registerID.H, registerID.L);
+                                this.tickClock(8);
+                                break;
+                            }
+                        case 0xC:
+                            {
+                                this.registers.incRegister(registerID.L);
+                                this.tickClock(4);
+                                break;
+                            }
+                        case 0xD:
+                            {
+                                this.registers.decRegister(registerID.L);
+                                this.tickClock(4);
+                                break;
+                            }
+                        case 0xE:
+                            {
+                                this.registers.setRegister(registerID.L, this.fetch());
+                                this.tickClock(8);
+                                break;
+                            }
+                        case 0xF://TODO CPL
+                            break;
+                    }
+                    break;
+                case 0x3:
+                    switch (low) {
+                        case 0x0:
+                            this.jumpRelativeConditional(!this.registers.getFlag(4));
+                            break;
+                        case 0x1:
+                            let low = this.fetch();
+                            let high = this.fetch();
+                            this.stackPointer = ((high << 4) | low);
+                            this.tickClock(12)
+                            break;
+                        case 0x2:
+                            {
+                                let location = this.registers.getRegisterDouble(registerID.H, registerID.L);
+                                this.registers.decRegisterDouble(registerID.H, registerID.L);
+                                let value = this.registers.getRegister(registerID.A);
+                                this.memory.writeMemory(location, value)
+                                this.tickClock(8);
+                                break;
+                            }
+                        case 0x3:
+                            break;
+                        case 0x4:
+                            break;
+                        case 0x5:
+                            break;
+                        case 0x6:
+                            break;
+                        case 0x7:
+                            break;
+                        case 0x8:
+                            this.jumpRelativeConditional(this.registers.getFlag(4));
+                            break;
+                        case 0x9:
+                            break;
+                        case 0xA:
+                            break;
+                        case 0xB:
+                            break;
+                        case 0xC:
+                            {
+                                this.registers.incRegister(registerID.A);
+                                this.tickClock(4);
+                                break;
+                            }
+                        case 0xD:
+                            {
+                                this.registers.decRegister(registerID.A);
+                                this.tickClock(4);
+                                break;
+                            }
+                        case 0xE:
+                            {
+                                this.registers.setRegister(registerID.A, this.fetch());
+                                this.tickClock(8);
+                                break;
+                            }
+                        case 0xF:
+                            break;
+                    }
+                    break;
                 case 0x4:
                     if (low < 8) {
                         this.ldXY(registerID.B, low);
@@ -492,7 +515,41 @@ export class Cpu {
                     }
                     break;
                 case 0xC:
-                    break
+                    switch (low) {
+                        case 0x0:
+                            break;
+                        case 0x1:
+                            break;
+                        case 0x2:
+                            break;
+                        case 0x3:
+                            break;
+                        case 0x4:
+                            break;
+                        case 0x5:
+                            break;
+                        case 0x6:
+                            break;
+                        case 0x7:
+                            break;
+                        case 0x8:
+                            break;
+                        case 0x9:
+                            break;
+                        case 0xA:
+                            break;
+                        case 0xB:
+                            break;
+                        case 0xC:
+                            break;
+                        case 0xD:
+                            break;
+                        case 0xE:
+                            break;
+                        case 0xF:
+                            break;
+                    }
+                    break;
 
             }
         }
@@ -645,10 +702,14 @@ export class Cpu {
         this.opcodeTicks += cycles;
     }
 
-    jumpRelativeConditional(condition){
+    jumpRelativeConditional(condition) {
         location = this.fetch();
-        if(condition){
+        if (condition) {
             this.programCounter += location;
+            this.tickClock(12);
+        }
+        else {
+            this.tickClock(8);
         }
     }
 
@@ -707,7 +768,7 @@ export class Cpu {
         }
     }
 
-    debugClock(){
+    debugClock() {
         let debugElement = document.getElementById("clock");
         debugElement.textContent = this.opcodeTicks.toString();
     }
