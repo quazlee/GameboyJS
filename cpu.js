@@ -50,7 +50,7 @@ export class Cpu {
         let [high, low] = this.decode();
 
         //get the (HL) value
-        this.registers.setRegister(6, this.memory.readMemory(this.registers.getRegisterDouble(H, L)));
+        this.registers.setRegister(registerID.HL, this.memory.readMemory(this.registers.getRegisterDouble(registerID.H, registerID.L)));
         if (((high << 4) | low) != 0xCB) {
             switch (high) {
                 case 0x0:
@@ -146,7 +146,9 @@ export class Cpu {
                             this.registers.rotateRightCircularA();
                             this.tickClock(4);
                             break;
+
                     }
+                    break;
                 case 0x1:
                     switch (low) {
                         case 0x0:
@@ -233,6 +235,7 @@ export class Cpu {
                         //             this.tickClock(4);
                         //             break;
                     }
+                    break;
                 // case 0x2:
                 //     switch (low) {
                 //         case 0x0:
@@ -480,7 +483,7 @@ export class Cpu {
                     }
                     else {
                         this.registers.cpA(low - 8);//TODO
-                        if (low == 0x6) {
+                        if (low == 0xE) {
                             this.tickClock(8);
                         }
                         else {
@@ -497,46 +500,51 @@ export class Cpu {
             [high, low] = this.decode();
             switch (high) {
                 case 0x0:
-                    this.registers.rotateLeftCircular(low);
-                    if (low == 0x6) {
-                        this.tickClock(16);
+                    if (low < 8) {
+                        this.registers.rotateLeftCircular(low);
+                        if (low == 0x6) {
+                            this.tickClock(16);
+                        }
+                        else {
+                            this.tickClock(8);
+                        }
                     }
                     else {
-                        this.tickClock(8);
+                        this.registers.rotateRightCircular(low - 8);
+                        if (low == 0xE) {
+                            this.tickClock(16);
+                        }
+                        else {
+                            this.tickClock(8);
+                        }
                     }
                     break
                 case 0x1:
-                    if (low == 0x6) {
-                        this.tickClock(16);
-                    }
-                    else {
-                        this.tickClock(8);
-                    }
-                    break
-                case 0x2:
-                    if (low == 0x6) {
-                        this.tickClock(16);
-                    }
-                    else {
-                        this.tickClock(8);
-                    }
-                    break
-                case 0x3:
-                    if (low == 0x6) {
-                        this.tickClock(16);
-                    }
-                    else {
-                        this.tickClock(8);
-                    }
-                    break
-                case 0x4:
                     if (low < 8) {
-                        this.bit(0, low);
+                        this.registers.rotateLeft(low);
+                        if (low == 0x6) {
+                            this.tickClock(16);
+                        }
+                        else {
+                            this.tickClock(8);
+                        }
                     }
                     else {
-                        this.bit(1, low - 8);
+                        this.registers.rotateRight(low - 8);
+                        if (low == 0xE) {
+                            this.tickClock(16);
+                        }
+                        else {
+                            this.tickClock(8);
+                        }
                     }
-                    break
+                    break;
+                case 0x2:
+                    break;
+                case 0x3:
+                    break;
+                case 0x4:
+                    break;
                 case 0x5:
                     if (low < 8) {
                         this.bit(2, low);
@@ -544,7 +552,7 @@ export class Cpu {
                     else {
                         this.bit(3, low - 8);
                     }
-                    break
+                    break;
                 case 0x6:
                     if (low < 8) {
                         this.bit(4, low);
@@ -552,7 +560,7 @@ export class Cpu {
                     else {
                         this.bit(5, low - 8);
                     }
-                    break
+                    break;
                 case 0x7:
                     if (low < 8) {
                         this.bit(6, low);
@@ -560,7 +568,7 @@ export class Cpu {
                     else {
                         this.bit(7, low - 8);
                     }
-                    break
+                    break;
                 case 0x8:
                     if (low < 8) {
                         this.res(0, low);
@@ -568,7 +576,7 @@ export class Cpu {
                     else {
                         this.res(1, low - 8);
                     }
-                    break
+                    break;
                 case 0x9:
                     if (low < 8) {
                         this.res(2, low);
@@ -576,7 +584,7 @@ export class Cpu {
                     else {
                         this.res(3, low - 8);
                     }
-                    break
+                    break;
                 case 0xA:
                     if (low < 8) {
                         this.res(4, low);
@@ -584,7 +592,7 @@ export class Cpu {
                     else {
                         this.res(5, low - 8);
                     }
-                    break
+                    break;
                 case 0xB:
                     if (low < 8) {
                         this.res(6, low);
@@ -592,7 +600,7 @@ export class Cpu {
                     else {
                         this.res(7, low - 8);
                     }
-                    break
+                    break;
                 case 0xC:
                     if (low < 8) {
                         this.set(0, low);
@@ -600,7 +608,7 @@ export class Cpu {
                     else {
                         this.set(1, low - 8);
                     }
-                    break
+                    break;
                 case 0xD:
                     if (low < 8) {
                         this.set(2, low);
@@ -608,7 +616,7 @@ export class Cpu {
                     else {
                         this.set(3, low - 8);
                     }
-                    break
+                    break;
                 case 0xE:
                     if (low < 8) {
                         this.set(4, low);
@@ -616,7 +624,7 @@ export class Cpu {
                     else {
                         this.set(5, low - 8);
                     }
-                    break
+                    break;
                 case 0xF:
                     if (low < 8) {
                         this.set(6, low);
@@ -624,21 +632,29 @@ export class Cpu {
                     else {
                         this.set(7, low - 8);
                     }
-                    break
+                    break;
             }
         }
 
-        this.memory.writeMemory(this.getRegisterDouble(H, L), this.getRegister(6))//Assign the new HL value back to register
+        this.memory.writeMemory(this.registers.getRegisterDouble(registerID.H, registerID.L), this.registers.getRegister(registerID.HL))//Assign the new HL value back to register
         this.debugRomOutput();
+        this.debugClock();
     }
 
     tickClock(cycles) {
+        this.opcodeTicks += cycles;
+    }
 
+    jumpRelativeConditional(condition){
+        location = this.fetch();
+        if(condition){
+            this.programCounter += location;
+        }
     }
 
     ldXY(registerX, registerY) {
         this.registers.setRegister(registerX, registerY);
-        if (low == 0x6) {
+        if (registerY == 0x6) {
             this.tickClock(8);
         }
         else {
@@ -660,9 +676,9 @@ export class Cpu {
         }
     }
 
-    res(bit, register){
+    res(bit, register) {
         let registerValue = this.registers.getRegister(register);
-        registerValue &=  ~(1 << bit);
+        registerValue &= ~(1 << bit);
         if (low == 0x6) {
             this.tickClock(16);
         }
@@ -670,9 +686,9 @@ export class Cpu {
             this.tickClock(8);
         }
     }
-    set(bit, register){
+    set(bit, register) {
         let registerValue = this.registers.getRegister(register);
-        registerValue |=  (1 << bit);
+        registerValue |= (1 << bit);
         if (low == 0x6) {
             this.tickClock(16);
         }
@@ -689,6 +705,11 @@ export class Cpu {
             debugText.concat("", nextCharacter)
             console.log(nextCharacter);
         }
+    }
+
+    debugClock(){
+        let debugElement = document.getElementById("clock");
+        debugElement.textContent = this.opcodeTicks.toString();
     }
 
 }

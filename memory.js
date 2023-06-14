@@ -27,7 +27,7 @@ class MemoryBlock {
 
     getData(location) {
         try {
-            if (location > 7 || location < 0) {
+            if (location > this.size || location < 0) {
                 throw new Error("Location Must Be Between 0 and " + String(this.size - 1));
             }
             else {
@@ -77,7 +77,7 @@ class RomBank {
                 throw new Error("Location Must Be Between 0 and " + String(this.size - 1));
             }
             else {
-                return thisbanks[this.selectedRomBank].data[location];
+                return this.banks[this.selectedRomBank].data[location];
             }
         }
         catch (e) {
@@ -176,14 +176,13 @@ export class Memory {
         let romArrayIndex = 0;
         let currentBankIndex = 0;
         let currentBank = 0;
-        while(romArrayIndex < this.romInput.length){
-            if(romArrayIndex < 16384){
-                this.romZero.setData(romArrayIndex, this.romInput[romArrayIndex]);
-            }
-            else{
-                this.romBank.setData(currentBankIndex, this.romInput[romArrayIndex])
-                currentBankIndex++;
-            }
+        while(romArrayIndex < 16384){
+            this.romZero.setData(romArrayIndex, this.romInput[romArrayIndex]);
+            romArrayIndex++;
+        }
+        while(romArrayIndex < this.romInput.length - 1){
+            this.romBank.setData(currentBankIndex, this.romInput[romArrayIndex])
+            currentBankIndex++;
 
             romArrayIndex++;
 

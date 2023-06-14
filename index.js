@@ -1,6 +1,7 @@
 import { Gameboy } from "./gameboy.js"
 
 let selectedRom = document.getElementById("romInput");
+let gameboy = new Gameboy();
 selectedRom.addEventListener("change", startGameboy, false);
 
 
@@ -20,10 +21,6 @@ async function readRom(rom) {
 async function startGameboy() {
     let rom = this.files[0];
     let romData = await readRom(rom);
-    let gameboy = new Gameboy(romData);
+    gameboy.initialize(romData);
+    setInterval(gameboy.mainLoop.bind(gameboy), 16);
 }
-
-function test(){
-    return [1, 2];
-}
-

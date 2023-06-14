@@ -1,12 +1,13 @@
 import { errorHandler } from "./errorhandler.js";
 
-const registerNames = {
+const registerID = {
     B: 0,
     C: 1,
     D: 2,
     E: 3,
     H: 4,
     L: 5,
+    HL: 6,
     A: 7,
     F: 8
 }
@@ -125,21 +126,41 @@ export class RegisterCollection {
     }
 
     addA(targetRegister) {
-        let oldValue = this.data[A]
-        this.data[A] = sum(oldValue, this.data[targetRegister]);
-        this.assignZero(this.data[A]);
+        let oldValue = this.data[registerID.A]
+        this.data[registerID.A] = this.sum(oldValue, this.data[targetRegister]);
+        this.assignZero(this.data[registerID.A]);
         this.clearFlag(6);
-        this.assignHalfcarryAdd(oldValue, value);
-        this.assignCarry(oldValue, value);
+        this.assignHalfcarryAdd(oldValue, this.data[registerID.A]);
+        this.assignCarry(oldValue, this.data[registerID.A]);
     }
 
     adcA(targetRegister){
+
+    }
+
+    subA(){
+
+    }
+
+    sbcA(){
+
+    }
+
+    xorA(){
+
+    }
+
+    orA(){
+
+    }
+
+    cpA(){
         
     }
 
     addHL(value) {
-        let oldValue = this.getRegisterDouble(H, L)
-        this.data[HL] = sum(oldValue, value)
+        let oldValue = this.getRegisterDouble(registerID.H, registerID.L)
+        this.data[registerID.HL] = this.sum(oldValue, value)
         this.clearFlag(6);
         this.assignHalfcarryAddDouble(oldValue, value);
         this.assignCarry(oldValue, value);
@@ -147,7 +168,7 @@ export class RegisterCollection {
 
     incRegister(register) {
         let oldValue = this.data[register];
-        let newValue = sum(oldValue, 1);
+        let newValue = this.sum(oldValue, 1);
         this.data[register] = newValue;
         this.assignZero(newValue);
         this.clearFlag(7);
@@ -187,11 +208,11 @@ export class RegisterCollection {
 
     rotateRightA() {
         let carry = getCarry();
-        if (this.data[A] & 1)
+        if (this.data[registerID.A] & 1)
             setCarry();
         else
             clearCarry();
-        this.data[A] = (this.data[A] >> 1 | (carry << 7));
+        this.data[registerID.A] = (this.data[registerID.A] >> 1 | (carry << 7));
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
@@ -199,30 +220,30 @@ export class RegisterCollection {
 
     rotateLeftA() {
         let carry = getCarry();
-        if (this.data[A] & 1)
+        if (this.data[registerID.A] & 1)
             setCarry();
         else
             clearCarry();
-        this.data[A] = (this.data[A] << 1 | (carry));
+        this.data[registerID.A] = (this.data[registerID.A] << 1 | (carry));
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
     }
 
     rotateRightCircularA() {
-        this.data[A] = ((this.data[A] >> 1) | (this.data[A] << 7));
+        this.data[registerID.A] = ((this.data[registerID.A] >> 1) | (this.data[registerID.A] << 7));
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
-        assignCarryShiftRight(this.data[A]);
+        assignCarryShiftRight(this.data[registerID.A]);
     }
 
     rotateLeftCircularA() {
-        this.data[A] = ((this.data[A] << 1) | (this.data[A] >> 7));
+        this.data[registerID.A] = ((this.data[registerID.A] << 1) | (this.data[registerID.A] >> 7));
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
-        assignCarryShiftRight(this.data[A]);
+        assignCarryShiftRight(this.data[registerID.A]);
     }
 
     rotateRight(register) {
