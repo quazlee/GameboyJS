@@ -19,7 +19,7 @@ export class Cpu {
         this.opcodeTicks = 0;
         this.memory = new Memory(romArray);
         this.programCounter = 0x0100;
-        this.stackPointer = 0;
+        this.stackPointer = 0xFFFE;
 
     }
 
@@ -724,6 +724,10 @@ export class Cpu {
         this.opcodeTicks += cycles;
     }
 
+    jumpConditional(condition){
+
+    }
+
     jumpRelativeConditional(condition) {
         let location = this.fetch();
         if (condition) {
@@ -734,10 +738,22 @@ export class Cpu {
             this.tickClock(8);
         }
     }
-    callConditional(){
-        
+    
+    callConditional(condition){
+        let low = this.fetch();
+        let high = this.fetch();
+        if(condition){
+            this.stackPointer = this.registers.differenceDouble(this.stackPointer, 2);
+            this.memory.writeMemory(this.stackPointer, this.programCounter);
+            this.programCounter = (high << 4) | low;
+            this.tickClock(24);
+        }
+        else{
+            this.tickClock(12);
+        }
+       
     }
-    returnConditional(){
+    returnConditional(condition){
 
     }
 
