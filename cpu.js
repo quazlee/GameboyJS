@@ -734,6 +734,12 @@ export class Cpu {
             this.tickClock(8);
         }
     }
+    callConditional(){
+        
+    }
+    returnConditional(){
+
+    }
 
     ldXY(registerX, registerY) {
         this.registers.setRegister(registerX, registerY);
