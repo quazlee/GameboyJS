@@ -204,7 +204,7 @@ export class Cpu {
                             }
                         case 0x8:
                             {
-                                jumpOffset = this.fetch();
+                                let jumpOffset = this.fetch();
                                 this.programCounter += jumpOffset;
                                 this.tickClock(12);
                                 break;
@@ -358,23 +358,45 @@ export class Cpu {
                                 break;
                             }
                         case 0x3:
+                            this.stackPointer = this.registers.sum(this.stackPointer, 1);
+                            this.tickClock(8);
                             break;
                         case 0x4:
+                            this.registers.incRegister(registerID.HL);
+                            this.tickClock(12);
                             break;
                         case 0x5:
+                            this.registers.decRegister(registerID.HL);
+                            this.tickClock(12);
                             break;
                         case 0x6:
-                            break;
-                        case 0x7:
+                            {
+                                this.registers.setRegister(registerID.HL, this.fetch());
+                                this.tickClock(12);
+                                break;
+                            }
+                        case 0x7://TODO SCF
                             break;
                         case 0x8:
                             this.jumpRelativeConditional(this.registers.getFlag(4));
                             break;
                         case 0x9:
-                            break;
+                            {
+                                this.registers.addHL(this.stackPointer);
+                                this.tickClock(8);
+                                break;
+                            }
                         case 0xA:
-                            break;
+                            {
+                                let value = this.memory.readMemory(this.registers.getRegisterDouble(registerID.H, registerID.L));
+                                this.registers.decRegisterDouble(registerID.H, registerID.L);
+                                this.registers.setRegister(registerID.A, value);
+                                this.tickClock(8);
+                                break;
+                            }
                         case 0xB:
+                            this.stackPointer = this.registers.difference(this.stackPointer, 1);
+                            this.tickClock(8);
                             break;
                         case 0xC:
                             {
@@ -394,7 +416,7 @@ export class Cpu {
                                 this.tickClock(8);
                                 break;
                             }
-                        case 0xF:
+                        case 0xF://TODO CCF
                             break;
                     }
                     break;
@@ -703,7 +725,7 @@ export class Cpu {
     }
 
     jumpRelativeConditional(condition) {
-        location = this.fetch();
+        let location = this.fetch();
         if (condition) {
             this.programCounter += location;
             this.tickClock(12);

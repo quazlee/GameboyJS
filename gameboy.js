@@ -16,6 +16,8 @@ export class Gameboy {
         while(this.cpu.opcodeTicks < 17556){
             this.cpu.execute();
         }
+        document.getElementById("frames-elapsed").stepUp(1);
+
         this.cpu.opcodeTicks = 0;
     }
 }

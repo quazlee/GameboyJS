@@ -73,7 +73,7 @@ class RomBank {
 
     getData(location) {
         try {
-            if (location > 7 || location < 0) {
+            if (location > this.size || location < 0) {
                 throw new Error("Location Must Be Between 0 and " + String(this.size - 1));
             }
             else {
@@ -105,10 +105,10 @@ export class Memory {
         this.vram = new MemoryBlock(8192);
 
         /** 0xA000-0xBFFF */
-        this.ram = new MemoryBlock(4096);
+        this.ram = new MemoryBlock(8192);
 
         /** 0xC000-0xDFFF */
-        this.wram = new MemoryBlock(4096);
+        this.wram = new MemoryBlock(8192);
 
         /** 0xE000-0xFDFF
          * ECHO RAM SO IGNORE IT
@@ -146,17 +146,19 @@ export class Memory {
             else if (location < 0xE000)
                 return this.wram.getData(location - 0xC000);
             else if (location < 0xFE00)
-                throw new Error("Invalid Location");
+                throw new Error("Invalid Location: ECHO RAM");
             else if (location < 0xFEA0)
                 return this.oam.getData(location - 0xFE00);
             else if (location < 0xFF00)
-                throw new Error("Invalid Location");
+                throw new Error("Invalid Location: PROHIBITED");
             else if (location < 0xFF80)
                 return this.io.getData(location - 0xFF00);
             else if (location < 0xFFFF)
                 return this.hram.getData(location - 0xFF80);
-            else
+            else if(location == 0xFFFF)
                 return this.ie.getData(0);
+            else
+                throw new Error("Invalid Location: OUT OF BOUNDS")
         }
         catch (e) {
             errorHandler(e);
@@ -192,5 +194,6 @@ export class Memory {
                 this.romBank.changeBank(currentBank);
             }
         }
+        this.romBank.changeBank(0);
     }
 }

@@ -96,7 +96,7 @@ export class RegisterCollection {
     */
     getRegister(register) {
         try {
-            if (this.data[register] > 255 || this.data[register] < 0) {
+            if (register != registerID.HL && (this.data[register] > 255 || this.data[register] < 0)) {
                 throw new Error("Value Must Be Between 0x00 and 0xFF");
             }
             else {
@@ -235,7 +235,7 @@ export class RegisterCollection {
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
-        assignCarryShiftRight(this.data[registerID.A]);
+        this.assignCarryShiftRight(this.data[registerID.A]);
     }
 
     rotateLeftCircularA() {
@@ -243,7 +243,7 @@ export class RegisterCollection {
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
-        assignCarryShiftRight(this.data[registerID.A]);
+        this.assignCarryShiftRight(this.data[registerID.A]);
     }
 
     rotateRight(register) {
