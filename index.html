@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,29 +9,38 @@
     <script type="module" src="index.js"></script>
     <link rel="stylesheet" href="index.css">
 </head>
+
 <body>
-    <canvas id="gameboyCanvas" width="500" height="500"></canvas>
-    
-    <input type="file" id="romInput" accept=".gb" autocomplete="off">
+    <header>Gameboy Emulator</header>
+    <div class="main-column">
+        <div class="canvas-wrapper">
+            <canvas id="gameboyCanvas" width="160" height="144"></canvas>
+        </div>
 
-    <div id="debug-checkbox">
-        <input type="checkbox" name="isDebug" id="isDebug">
-        <label for="isDebug">Enable Debug Tools</label>
-    </div>
+        <input type="file" id="romInput" accept=".gb" autocomplete="off">
 
-    <div class="debug-tool" id="step-controls">
-        <select name="step-mode" id="step-mode">
-            <option value="none" selected>No Step</option>
-            <option value="opcode">Opcode Step</option>
-            <option value="frame">Frame Step</option>
-        </select>
-        <input type="button" value="Next Opcode">
-        <input type="button" value="Next Frame">
+        <div class="debug-tools">
+            <div id="debug-checkbox">
+                <input type="checkbox" name="is-debug" id="is-debug">
+                <label for="isDebug">Enable Debug Tools</label>
+            </div>
+
+            <div class="debug-tool" id="step-controls">
+                <select name="step-mode" id="step-mode">
+                    <option value="none" selected>No Step</option>
+                    <option value="opcode">Opcode Step</option>
+                    <option value="frame">Frame Step</option>
+                </select>
+                <input type="button" value="Next Opcode">
+                <input type="button" value="Next Frame">
+            </div>
+
+            <div class="debug-tool" id="debug"></div>
+            <div class="debug-tool" id="clock"></div>
+            <input class="debug-tool" type="number" id="frames-elapsed" autocomplete="off"></input>
+            <div class="debug-tool" id="fps"></div>
+        </div>
     </div>
-    
-    <div class="debug-tool" id="debug"></div>
-    <div class="debug-tool" id="clock"></div>
-    <input class="debug-tool" type="number" id="frames-elapsed" autocomplete="off"></input>
-    <div class="debug-tool" id="fps"></div>
 </body>
+
 </html>

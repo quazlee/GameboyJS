@@ -3,20 +3,22 @@ import { Gameboy } from "./gameboy.js"
 let selectedRom = document.getElementById("romInput");
 let gameboy = new Gameboy();
 selectedRom.addEventListener("change", startGameboy, false);
-document.getElementById("debug-checkbox").addEventListener("change", () =>{
-    if(this.checked){
-        let elements = document.getElementsByClassName("debug-tools");
-        elements.forEach(element => {
-            element.style.display = "block";
-        });
+
+let checkbox = document.getElementById("is-debug");
+checkbox.addEventListener("change", () =>{
+    if(checkbox.checked){
+        let elements = document.getElementsByClassName("debug-tool");
+        for (let index = 0; index < elements.length; index++) {
+            elements[index].style.display = "block";
+        }
     }
     else{
-        let elements = document.getElementsByClassName("debug-tools");
-        elements.forEach(element => {
-            element.style.display = "none";
-        });
+        let elements = document.getElementsByClassName("debug-tool");
+        for (let index = 0; index < elements.length; index++) {
+            elements[index].style.display = "none";
+        }
     }
-})
+});
 
 async function readRom(rom) {
     let fileReader = new FileReader();
@@ -40,16 +42,6 @@ async function startGameboy() {
     setInterval(() => {
         document.getElementById("fps").textContent = document.getElementById("frames-elapsed").value - framesSinceLastCheck;
         framesSinceLastCheck = document.getElementById("frames-elapsed").value;
-    }, 1000);
+    }, 1000);    
 }
 
-function hideDebugTools(){
-    let elements = document.getElementsByClassName("debug-tools");
-    elements.forEach(element => {
-        element.style.display = "none";
-    });
-}
-
-function showDebugTools(){
-    
-}
