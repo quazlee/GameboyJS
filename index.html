@@ -18,7 +18,7 @@
         <label for="isDebug">Enable Debug Tools</label>
     </div>
 
-    <div id="step-controls">
+    <div class="debug-tool" id="step-controls">
         <select name="step-mode" id="step-mode">
             <option value="none" selected>No Step</option>
             <option value="opcode">Opcode Step</option>
@@ -28,9 +28,9 @@
         <input type="button" value="Next Frame">
     </div>
     
-    <div id="debug"></div>
-    <div id="clock"></div>
-    <input type="number" id="frames-elapsed" autocomplete="off"></input>
-    <div id="fps"></div>
+    <div class="debug-tool" id="debug"></div>
+    <div class="debug-tool" id="clock"></div>
+    <input class="debug-tool" type="number" id="frames-elapsed" autocomplete="off"></input>
+    <div class="debug-tool" id="fps"></div>
 </body>
 </html>
