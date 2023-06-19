@@ -1,24 +1,11 @@
 import { Gameboy } from "./gameboy.js"
 
-let selectedRom = document.getElementById("romInput");
-let gameboy = new Gameboy();
-selectedRom.addEventListener("change", startGameboy, false);
+import { stepMode } from "./debug.js";
 
-let checkbox = document.getElementById("is-debug");
-checkbox.addEventListener("change", () =>{
-    if(checkbox.checked){
-        let elements = document.getElementsByClassName("debug-tool");
-        for (let index = 0; index < elements.length; index++) {
-            elements[index].style.display = "block";
-        }
-    }
-    else{
-        let elements = document.getElementsByClassName("debug-tool");
-        for (let index = 0; index < elements.length; index++) {
-            elements[index].style.display = "none";
-        }
-    }
-});
+let gameboy = new Gameboy();
+
+let selectedRom = document.getElementById("romInput");
+selectedRom.addEventListener("change", startGameboy, false);
 
 async function readRom(rom) {
     let fileReader = new FileReader();
@@ -33,15 +20,14 @@ async function readRom(rom) {
     });
 }
 
-let framesSinceLastCheck = 0;
 async function startGameboy() {
     let rom = this.files[0];
     let romData = await readRom(rom);
     gameboy.initialize(romData);
-    setInterval(gameboy.mainLoop.bind(gameboy), 16);
-    setInterval(() => {
-        document.getElementById("fps").textContent = document.getElementById("frames-elapsed").value - framesSinceLastCheck;
-        framesSinceLastCheck = document.getElementById("frames-elapsed").value;
-    }, 1000);    
+
+    setInterval(gameboy.mainLoop.bind(gameboy), 1000 / 60);
 }
+
+
+
 

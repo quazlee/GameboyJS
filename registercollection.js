@@ -15,15 +15,20 @@ const registerID = {
 export class RegisterCollection {
     constructor() {
         this.data = new Array(9)
-        for (let i = 0; i < this.data.length; i++) {
-            this.data[i] = 0;
-        }
+        this.data[registerID.B] = 0x00;
+        this.data[registerID.C] = 0x13;
+        this.data[registerID.D] = 0x00;
+        this.data[registerID.E] = 0xD8;
+        this.data[registerID.H] = 0x01;
+        this.data[registerID.L] = 0x4D;
+        this.data[registerID.A] = 0x01;
+        this.data[registerID.F] = 0xB0;
     }
 
     sum(value1, value2) {
         let sum = value1 + value2;
         if (sum > 255) {
-            sum -= 255;
+            sum -= 256;
         }
         return sum;
     }
@@ -31,7 +36,7 @@ export class RegisterCollection {
     difference(value1, value2) {
         let difference = value1 - value2;
         if (difference < 0) {
-            difference += 255;
+            difference += 256;
         }
         return difference;
     }
@@ -125,37 +130,78 @@ export class RegisterCollection {
         }
     }
 
-    addA(targetRegister) {
+    addA(targetValue) {
         let oldValue = this.data[registerID.A]
-        this.data[registerID.A] = this.sum(oldValue, this.data[targetRegister]);
+        this.data[registerID.A] = this.sum(oldValue, targetValue);
         this.assignZero(this.data[registerID.A]);
         this.clearFlag(6);
-        this.assignHalfcarryAdd(oldValue, this.data[registerID.A]);
+        this.assignHalfcarryAdd(oldValue, targetValue);
         this.assignCarry(oldValue, this.data[registerID.A]);
     }
 
-    adcA(targetRegister){
-
+    adcA(targetValue){
+        let oldValue = this.data[registerID.A]
+        oldValue = this.sum(oldValue, targetValue);
+        this.data[registerID.A] = this.sum(oldValue, this.getFlag(4));
+        this.assignZero(this.data[registerID.A]);
+        this.clearFlag(6);
+        this.assignHalfcarryAdd(oldValue, targetValue);
+        this.assignCarry(oldValue, this.data[registerID.A]);
     }
 
-    subA(){
-
+    subA(targetValue){
+        let oldValue = this.data[registerID.A]
+        this.data[registerID.A] = this.difference(oldValue, targetValue);
+        this.assignZero(this.data[registerID.A]);
+        this.setFlag(6);
+        this.assignHalfcarrySub(oldValue, targetValue);
+        this.assignCarry(oldValue, this.data[registerID.A]);
     }
 
-    sbcA(){
-
+    sbcA(targetValue){
+        let oldValue = this.data[registerID.A]
+        oldValue = this.difference(oldValue, targetValue);
+        this.data[registerID.A] = this.difference(oldValue, this.getFlag(4));
+        this.assignZero(this.data[registerID.A]);
+        this.setFlag(6);
+        this.assignHalfcarrySub(oldValue, targetValue);
+        this.assignCarry(oldValue, this.data[registerID.A]);
     }
 
-    xorA(){
-
+    andA(targetValue){
+        let oldValue = this.data[registerID.A];
+        this.data[registerID.A] = oldValue & targetValue;
+        this.assignZero(this.data[registerID.A]);
+        this.clearFlag(6);
+        this.setFlag(5);
+        this.clearFlag(4);
     }
 
-    orA(){
-
+    xorA(targetValue){
+        let oldValue = this.data[registerID.A];
+        this.data[registerID.A] = oldValue ^ targetValue;
+        this.assignZero(this.data[registerID.A]);
+        this.clearFlag(6);
+        this.clearFlag(5);
+        this.clearFlag(4);
     }
 
-    cpA(){
-        
+    orA(targetValue){
+        let oldValue = this.data[registerID.A];
+        this.data[registerID.A] = oldValue | targetValue;
+        this.assignZero(this.data[registerID.A]);
+        this.clearFlag(6);
+        this.clearFlag(5);
+        this.clearFlag(4);
+    }
+
+    cpA(targetValue){
+        let comparison = this.data[registerID.A];
+        comparison = this.difference(comparison, targetValue);
+        this.assignZero(comparison);
+        this.setFlag(6);
+        this.assignHalfcarrySub(this.data[registerID.A], targetValue);
+        this.assignCarry(this.data[registerID.A], comparison);
     }
 
     addHL(value) {
@@ -171,8 +217,8 @@ export class RegisterCollection {
         let newValue = this.sum(oldValue, 1);
         this.data[register] = newValue;
         this.assignZero(newValue);
-        this.clearFlag(7);
-        this.assignHalfcarryAdd(oldValue, newValue);
+        this.clearFlag(6);
+        this.assignHalfcarryAdd(oldValue, 1);
     }
 
     incRegisterDouble(registerHigh, registerLow) {
@@ -189,8 +235,8 @@ export class RegisterCollection {
         let newValue = this.difference(this.data[register], 1);
         this.data[register] = newValue;
         this.assignZero(newValue);
-        this.clearFlag(7);
-        this.assignHalfcarrySub(oldValue, newValue);
+        this.setFlag(6);
+        this.assignHalfcarrySub(oldValue, 1);
     }
 
     decRegisterDouble(registerHigh, registerLow) {
@@ -315,27 +361,27 @@ export class RegisterCollection {
     }
 
     assignHalfcarryAdd(value1, value2) {
-        if (((value1 & 0xf) + (value2 & 0xf)) & 0x10)
+        if ((((value1 & 0xf) + (value2 & 0xf)) & 0x10) == 0x10)
             this.setFlag(5);
         else
             this.clearFlag(5);
     }
 
     assignHalfcarryAddDouble(value1, value2) {
-        if (((value1 & 0xff) + (value2 & 0xff)) & 0x0100)
+        if ((((value1 & 0xff) + (value2 & 0xff)) & 0x0100) == 0x0100)
             this.setFlag(5);
         else
             this.clearFlag(5);
     }
 
     assignHalfcarrySub(value1, value2) {
-        if (((value1 & 0xf) - (value2 & 0xf)) & 0x10)
+        if ((((value1 & 0xf) - (value2 & 0xf)) & 0x10) == 0x10)
             this.setFlag(5);
         else
             this.clearFlag(5);
     }
     assignHalfcarrySubDouble(value1, value2) {
-        if (((value1 & 0xff) - (value2 & 0xff)) & 0x0100)
+        if ((((value1 & 0xff) - (value2 & 0xff)) & 0x0100) == 0x0100)
             this.setFlag(5);
         else
             this.clearFlag(5);

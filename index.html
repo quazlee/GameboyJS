@@ -7,7 +7,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <script type="module" src="index.js"></script>
+    <script type="module" src="debug.js"></script>
     <link rel="stylesheet" href="index.css">
+    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
 </head>
 
 <body>
@@ -21,24 +25,116 @@
 
         <div class="debug-tools">
             <div id="debug-checkbox">
-                <input type="checkbox" name="is-debug" id="is-debug">
-                <label for="isDebug">Enable Debug Tools</label>
+                <input type="checkbox" name="is-debug" id="is-debug" autocomplete="off">
+                <label for="is-debug">View Debug Tools</label>
             </div>
 
-            <div class="debug-tool" id="step-controls">
-                <select name="step-mode" id="step-mode">
-                    <option value="none" selected>No Step</option>
-                    <option value="opcode">Opcode Step</option>
-                    <option value="frame">Frame Step</option>
-                </select>
-                <input type="button" value="Next Opcode">
-                <input type="button" value="Next Frame">
+            <div class="debug-tool" id="debug-options">
+                <div class="multiselect">
+                    <div class="selectBox" id="selectBox">
+                        <select>
+                            <option>Choose Debug Tools</option>
+                        </select>
+                        <div class="overSelect"></div>
+                    </div>
+                    <div id="dropdown-options">
+                        <div class="dropdown-option">
+                            <input type="checkbox" name="one" id="one" />
+                            <label for="one">Step Controls</label>
+                        </div>
+                        <div class="dropdown-option">
+                            <input type="checkbox" name="two" id="two" />
+                            <label for="two">Memory Watch</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- <div class="debug-tool">
+                <div id="step-controls">
+                    <select name="step-mode" id="step-mode" autocomplete="off">
+                        <option value="none" selected>Continuous</option>
+                        <option value="opcode">Opcode Step</option>
+                        <option value="frame">Frame Step</option>
+                        <option value="breakpoint">Breakpoint Mode</option>
+                    </select>
+                    <input type="button" value="Next Opcode" id="step-opcode" disabled autocomplete="off">
+                    <input type="button" value="Next Frame" disabled autocomplete="off">
+
+                    <div id="breakpoint-controls">
+                        <input type="text" name="breakpoint-input" id="breakpoint-input">
+                        <label for="breakpoint-input">Breakpoint Program Counter</label>
+                        <button id="breakpoint-input-submit">Submit</button>
+                    </div>
+
+                    <div class="tooltip">
+                        <i class="fa-solid fa-circle-question"></i>
+                        <span class="tooltip-text">Requires Restart to Change Mode</span>
+                    </div>
+                </div>
+            </div> -->
+
+            <div class="debug-tool">
+                <div id="flow-controls">
+                    <input type="button" value="Resume" disabled autocomplete="off">
+                    <input type="button" value="Pause" disabled autocomplete="off">
+                    <input type="button" value="Next Opcode" id="step-opcode" disabled autocomplete="off">
+                    <input type="button" value="Next Frame" disabled autocomplete="off">
+                </div>
+
+                <div id="breakpoint-controls-programcounter">
+                    <label for="breakpoint-input-programcounter">Breakpoint Program Counter</label>
+                    <input type="text" name="breakpoint-input-programcounter" id="breakpoint-input-programcounter">                    
+                    <button id="breakpoint-submit-programcounter">Submit</button>
+                    <div class="tooltip">
+                        <i class="fa-solid fa-circle-question"></i>
+                        <span class="tooltip-text">Four Digit Hex</span>
+                    </div>
+                </div>
+
+                <div id="breakpoint-controls-opcode">
+                    <label for="breakpoint-input-opcode">Breakpoint Opcode</label>
+                    <input type="text" name="breakpoint-input-opcode" id="breakpoint-input-opcode">                    
+                    <button id="breakpoint-submit-opcode">Submit</button>
+                    <div class="tooltip">
+                        <i class="fa-solid fa-circle-question"></i>
+                        <span class="tooltip-text">Two Digit Hex</span>
+                    </div>
+                </div>
+
             </div>
 
             <div class="debug-tool" id="debug"></div>
+            <div class="debug-tool" id="program-counter"></div>
+            <div class="debug-tool" id="current-opcode"></div>
             <div class="debug-tool" id="clock"></div>
+
             <input class="debug-tool" type="number" id="frames-elapsed" autocomplete="off"></input>
+
             <div class="debug-tool" id="fps"></div>
+
+            <div class="debug-tool">
+                <div id="register-viewer">
+                    <div id="registers">
+                        <div class="register" id="register-BC"></div>
+                        <div class="register" id="register-DE"></div>
+                        <div class="register" id="register-HL"></div>
+                        <div class="register" id="register-AF"></div>
+                    </div>
+                    <div id="flags">
+                        <div class="flag" id="flag-z"></div>
+                        <div class="flag" id="flag-n"></div>
+                        <div class="flag" id="flag-h"></div>
+                        <div class="flag" id="flag-c"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="debug-tool" id="memory-viewer">
+                <input type="text" name="memory-viewer-input" id="memory-viewer-input">
+                <label for="memory-viewer-input">Memory Location</label>
+                <button id="memory-viewer-submit">Submit</button>
+            </div>
         </div>
     </div>
 </body>

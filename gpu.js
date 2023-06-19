@@ -1,5 +1,6 @@
 export class Gpu {
-    constructor() {
+    constructor(memory) {
+        this.memory = memory;
         this.canvas = document.getElementById("gameboyCanvas");
         this.ctx = this.canvas.getContext("2d");
         this.screenWidth = 160;
@@ -9,10 +10,39 @@ export class Gpu {
             "rgba(86, 86, 86 1)",
             "rgba(0, 0, 0, 1)"];
 
-        // this.colorPalette = ["red",
-        //     "green",
-        //     "blue",
-        //     "yellow"];
+        this.tileMapA = [...Array(32)].map(() => Array(32));
+        this.tileMapB = [...Array(32)].map(() => Array(32));
+        this.viewport = [...Array(18)].map(() => Array(20));
+
+        this.mode = 2;
+        this.scanLine = 0;
+        this.scanLineTicks;
+    }
+
+    populateViewPort(){
+        for (let y = 0; y < 18; y++) {
+            for (let x = 0; x < 20; x++) {
+                this.viewport[y][x] = this.tileMapA[y][x];
+            }
+        }
+    }
+
+    populateTileMaps(){
+        let mapLocation = 0x9800;
+        for (let y = 0; y < 32; y++) {
+            for (let x = 0; x < 32; x++) {
+                this.tileMapA[y][x] = this.memory.readMemory(mapLocation);
+                mapLocation++;
+            }
+        }
+
+        for (let y = 0; y < 32; y++) {
+            for (let x = 0; x < 32; x++) {
+                this.tileMapB[y][x] = this.memory.readMemory(mapLocation);
+                mapLocation++;
+            }
+        }
+
     }
 
     decodeTile(tile) {
@@ -51,5 +81,27 @@ export class Gpu {
         this.ctx.strokeStyle = color;
         this.ctx.fillStyle = color;
         this.ctx.fillRect(x, y, 1, 1);
+    }
+    
+    oamScan(){
+        
+    }
+}
+
+
+class pixelFetcher{
+    constructor(){
+        this.data = Array(8);
+        this.pushIndex;
+        this.popIndex;
+        this.nextPixel;
+    }
+
+    push(){
+
+    }
+
+    pop(){
+
     }
 }

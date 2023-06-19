@@ -59,8 +59,8 @@ class RomBank {
             if (value > 255 || value < 0) {
                 throw new Error("Value Must Be Between 0x00 and 0xFF");
             }
-            else if (location > this.size || location < 0) {
-                throw new Error("Location Must Be Between 0 and " + String(this.size - 1));
+            else if (location > 16384 || location < 0) {
+                throw new Error("Location Must Be Between 0 and " + String(16384 - 1));
             }
             else {
                 this.banks[this.selectedRomBank].data[location] = value;
@@ -91,7 +91,7 @@ export class Memory {
     constructor(romInput) {
         this.romInput = romInput;
         let exponent = this.romInput[0x0148];
-        this.numRomBanks = (2^exponent) - 1;
+        this.numRomBanks = (2 ^ exponent);
         this.ramEnabled = false;
         this.bankMode = false;
 
@@ -155,7 +155,7 @@ export class Memory {
                 return this.io.getData(location - 0xFF00);
             else if (location < 0xFFFF)
                 return this.hram.getData(location - 0xFF80);
-            else if(location == 0xFFFF)
+            else if (location == 0xFFFF)
                 return this.ie.getData(0);
             else
                 throw new Error("Invalid Location: OUT OF BOUNDS")
@@ -167,32 +167,80 @@ export class Memory {
 
     writeMemory(location, value) {
         try {
-
+            if (location < 0x2000) {
+                let low = value | 0xF;
+                if (low == 0xA) {
+                    this.ramEnabled = true;
+                }
+                else {
+                    this.ramEnabled = false;
+                }
+            }
+            else if (location < 0x4000) {
+                this.romBank.changeBank(value - 1);
+            }
+            else if (location < 0x6000) {
+                //need to figure out ram if need bank or not
+            }
+            else if (location < 0x8000) {
+                //see pandocs to figure out later
+            }
+            else if (location < 0xA000) {
+                this.vram.setData(location - 0x8000, value);
+            }
+            else if (location < 0xC000 ){
+                if(this.ramEnabled){
+                    this.ram.setData(location - 0xA000, value);
+                }
+            }
+            else if (location < 0xE000) {
+                this.wram.setData(location - 0xC000, value);
+            }
+            else if (location < 0xFE00)
+                throw new Error("Invalid Location: ECHO RAM");
+            else if (location < 0xFEA0) {
+                this.oam.setData(location - 0xFE00);
+            }
+            else if (location < 0xFF00)
+                throw new Error("Invalid Location: PROHIBITED");
+            else if (location < 0xFF80){
+                this.io.setData(location - 0xFF00, value);
+            }
+            else if (location < 0xFFFF){
+                this.hram.setData(location - 0xFF80, value);
+            }
+            else if (location == 0xFFFF){
+                this.ie.setData(0, 1);
+            }
+            else{
+                throw new Error("Invalid Location: OUT OF BOUNDS");
+            }
         }
         catch (e) {
             errorHandler(e);
         }
     }
 
-    readRom(){
+    readRom() {
         let romArrayIndex = 0;
         let currentBankIndex = 0;
         let currentBank = 0;
-        while(romArrayIndex < 16384){
+        while (romArrayIndex < 16384) {
             this.romZero.setData(romArrayIndex, this.romInput[romArrayIndex]);
             romArrayIndex++;
         }
-        while(romArrayIndex < this.romInput.length - 1){
-            this.romBank.setData(currentBankIndex, this.romInput[romArrayIndex])
-            currentBankIndex++;
-
-            romArrayIndex++;
-
-            if(currentBankIndex == 16383){
+        while (romArrayIndex < this.romInput.length - 1) {
+            if (currentBankIndex == 16384) {
                 currentBankIndex = 0;
                 currentBank++;
                 this.romBank.changeBank(currentBank);
             }
+            this.romBank.setData(currentBankIndex, this.romInput[romArrayIndex]);
+            currentBankIndex++;
+
+            romArrayIndex++;
+
+            
         }
         this.romBank.changeBank(0);
     }

@@ -1,8 +1,10 @@
-.debug-tool{
+.debug-tool {
     display: none;
+    border: 1px solid black;
+    margin: 5px;
 }
 
-header{
+header {
     width: 100%;
     height: 50px;
     background-color: gray;
@@ -10,45 +12,110 @@ header{
     font-size: 2rem;
     margin: auto;
 }
-body{
+
+body {
     background-color: white;
-    display:flex;
+    display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
     margin: 0;
-    
+
 }
 
-.main-column{
+.main-column {
     background-color: darkgray;
     width: 66%;
     height: calc(100vh - 50px);
-    box-shadow: 0 0 10px 3px rgba(0,0,0,0.75);
+    box-shadow: 0 0 10px 3px rgba(0, 0, 0, 0.75);
     clip-path: inset(0px -15px 0px -15px);
-    display:flex;
+    display: flex;
     flex-direction: column;
     /* justify-content: space-evenly; */
 }
 
-.canvas-wrapper{
+.canvas-wrapper {
     display: flex;
     justify-content: center;
     padding: 50px 0 50px 0;
 }
 
-.debug-tools{
+.debug-tools {
     display: flex;
     justify-content: flex-start;
     flex-direction: column;
+
 }
 
-canvas{
+canvas {
     box-shadow: 1px 1px 10px 1px black;
     width: 480px;
     height: 432px;
     /* width: 160px;
     height: 144px; */
     background-color: rgba(172, 172, 172, 1);
-    
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltip-text {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+}
+
+.tooltip:hover .tooltip-text {
+    visibility: visible;
+}
+
+.multiselect {
+    width: 200px;
+}
+
+.selectBox {
+    position: relative;
+}
+
+.selectBox select {
+    width: 100%;
+    font-weight: bold;
+}
+
+.overSelect {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+#checkboxes {
+    display: none;
+    border: 1px #dadada solid;
+    border-radius: 10px;
+}
+
+/* #checkboxes label {
+    display: block;
+} */
+
+#register-viewer{
+    display: flex;
+    flex-direction: row;
+}
+
+#flags{
+    padding-left: 20px;
 }
