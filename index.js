@@ -1,7 +1,5 @@
 import { Gameboy } from "./gameboy.js"
 
-import { stepMode } from "./debug.js";
-
 let gameboy = new Gameboy();
 
 let selectedRom = document.getElementById("romInput");

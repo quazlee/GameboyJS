@@ -49,24 +49,24 @@ setInterval(() => {
     framesSinceLastCheck = document.getElementById("frames-elapsed").value;
 }, 1000);
 
-export function stepMode(gameboy){
-    let stepMode = document.getElementById("step-mode");
-    if (stepMode.value == "none") {
-        setInterval(gameboy.mainLoop.bind(gameboy), 1000 / 60);
-    }
-    else if (stepMode.value == "opcode") {
-        let stepOpcode = document.getElementById("step-opcode");
-        stepOpcode.addEventListener("click", () => { gameboy.singleOpcode(); });
-        stepOpcode.disabled = false;
+// export function stepMode(gameboy){
+//     let stepMode = document.getElementById("step-mode");
+//     if (stepMode.value == "none") {
+//         setInterval(gameboy.mainLoop.bind(gameboy), 1000 / 60);
+//     }
+//     else if (stepMode.value == "opcode") {
+//         let stepOpcode = document.getElementById("step-opcode");
+//         stepOpcode.addEventListener("click", () => { gameboy.singleOpcode(); });
+//         stepOpcode.disabled = false;
 
         
-    }
-    else if (stepMode.value == "breakpoint") {
-        setInterval(gameboy.breakpoint.bind(gameboy), 1000 / 60);
-    }
-    else if (stepMode.value)
-    stepMode.disabled = true;
-}
+//     }
+//     else if (stepMode.value == "breakpoint") {
+//         setInterval(gameboy.breakpoint.bind(gameboy), 1000 / 60);
+//     }
+//     else if (stepMode.value)
+//     stepMode.disabled = true;
+// }
 
 export function registerViewer(registers){
     let format = function(input){
@@ -89,3 +89,61 @@ export function registerViewer(registers){
     document.getElementById("flag-h").textContent = "h: ".concat(((flags & (1 << 5)) >> 5));
     document.getElementById("flag-c").textContent = "c: ".concat(((flags & (1 << 4)) >> 4));
 }
+
+let breakpointSubmit = document.getElementById("breakpoint-input-submit");
+breakpointSubmit.addEventListener("click", addBreakpoint)
+function addBreakpoint(){
+    let breakpointControls = document.getElementById("breakpoint-controls");
+    breakpointControls.style.backgroundColor = "";
+    
+
+    let breakpointType = document.getElementById("breakpoint-type").value;
+    let breakpointOperator = document.getElementById("breakpoint-comparison").value;
+    let breakpointInputValue = document.getElementById("breakpoint-input-value").value;
+    let breakpointInputComparator = document.getElementById("breakpoint-input-comparator").value;
+    let breakpointController = document.getElementById("breakpoint-controller-body");
+    let valid = false;
+    if((breakpointType == "opcode" | breakpointType == "program-counter") &&
+    ((Number(breakpointInputValue) >= 0 && Number(breakpointInputValue) <= 0xFF))){
+        valid = true;
+    }
+    else if(breakpointType == "memory" && 
+    ((Number(breakpointInputValue) >= 0 && Number(breakpointInputValue) <= 0xFFFF)) &&
+    ((Number(breakpointInputComparator) >= 0 && Number(breakpointInputComparator) <= 0xFF))){
+        valid = true;
+    }
+    if(valid){
+    let newRow = document.createElement("tr");
+    
+    let newItem = document.createElement("td");
+    let newSubItem = document.createElement("input");
+    newSubItem.type = "checkbox";
+    newItem.appendChild(newSubItem);
+    newRow.appendChild(newItem);
+
+    newItem = document.createElement("td");
+    newItem.textContent = breakpointType;
+    newRow.appendChild(newItem);
+
+    newItem = document.createElement("td");
+    newItem.textContent = breakpointInputValue.concat(" ", breakpointOperator.concat(" ", breakpointInputComparator));
+    newRow.appendChild(newItem);
+
+    newItem = document.createElement("td");
+    newSubItem = document.createElement("i");
+    newSubItem.classList.add()
+    newSubItem.classList.add("fa-solid");
+    newSubItem.classList.add("fa-trash");
+    newItem.appendChild(newSubItem);
+    newRow.appendChild(newItem);
+
+    newSubItem.addEventListener("click", () =>{newRow.remove()});
+
+    breakpointController.appendChild(newRow);
+    }
+    else{
+        breakpointControls.style.backgroundColor = "red";
+    }
+}
+
+

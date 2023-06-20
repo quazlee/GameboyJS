@@ -4,6 +4,7 @@ export class Gameboy {
     constructor() {
         this.cpu = null;
         this.gpu = null;
+        let currentOpcode = null;
     }
 
     initialize(romArray){
@@ -12,8 +13,11 @@ export class Gameboy {
     }
 
     mainLoop() {
+        let breakpoint = false;
+        
         while(this.cpu.frameReady == false){
-            this.cpu.execute(this.cpu.decode());
+            this.currentOpcode = this.cpu.decode();
+            this.cpu.execute(this.currentOpcode);
         }
         this.cpu.frameReady = false;
         document.getElementById("frames-elapsed").stepUp(1);
