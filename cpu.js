@@ -886,19 +886,23 @@ export class Cpu {
     }
 
     tickClock(cycles) {
-        for (let i = 0; i < cycles; i++) {
-            if(this.opcodeTicks == 70223){
-                this.opcodeTicks = 0;
-                // this.gpu.populateViewPort();
-                this.frameReady = true;
-            }
-
-            this.opcodeTicks++;
-
-            if(this.opcodeTicks % 2 == 1){
-                // this.gpu.populateTileMaps();
-            }
+        this.opcodeTicks += cycles;
+        if(this.opcodeTicks > 70223){
+            this.frameReady = true;
         }
+        // for (let i = 0; i < cycles; i++) {
+        //     if(this.opcodeTicks == 70223){
+        //         this.opcodeTicks = 0;
+        //         // this.gpu.populateViewPort();
+        //         this.frameReady = true;
+        //     }
+
+        //     this.opcodeTicks++;
+
+        //     if(this.opcodeTicks % 2 == 1){
+        //         // this.gpu.populateTileMaps();
+        //     }
+        // }
     }
 
     jumpConditional(condition) {

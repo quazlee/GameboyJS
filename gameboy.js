@@ -14,13 +14,22 @@ export class Gameboy {
 
     mainLoop() {
         let breakpoint = false;
-        
+        var duration = 0;
+        var operations = 0;
         while(this.cpu.frameReady == false){
+            var start = (performance.now() + performance.timeOrigin);
+
             this.currentOpcode = this.cpu.decode();
             this.cpu.execute(this.currentOpcode);
+            duration += (performance.now() + performance.timeOrigin) - start;
+            operations++;
         }
+        this.cpu.opcodeTicks -= 70223;
+        
         this.cpu.frameReady = false;
         document.getElementById("frames-elapsed").stepUp(1);
+        console.log(duration);
+        console.log(operations);
     }
 
     // singleOpcode(){

@@ -59,7 +59,7 @@ setInterval(() => {
 //         stepOpcode.addEventListener("click", () => { gameboy.singleOpcode(); });
 //         stepOpcode.disabled = false;
 
-        
+
 //     }
 //     else if (stepMode.value == "breakpoint") {
 //         setInterval(gameboy.breakpoint.bind(gameboy), 1000 / 60);
@@ -68,8 +68,8 @@ setInterval(() => {
 //     stepMode.disabled = true;
 // }
 
-export function registerViewer(registers){
-    let format = function(input){
+export function registerViewer(registers) {
+    let format = function (input) {
         let number = input.toString(16);
         let digits = 4 - number.length;
         for (let i = 0; i < digits; i++) {
@@ -92,10 +92,10 @@ export function registerViewer(registers){
 
 let breakpointSubmit = document.getElementById("breakpoint-input-submit");
 breakpointSubmit.addEventListener("click", addBreakpoint)
-function addBreakpoint(){
+function addBreakpoint() {
     let breakpointControls = document.getElementById("breakpoint-controls");
     breakpointControls.style.backgroundColor = "";
-    
+
 
     let breakpointType = document.getElementById("breakpoint-type").value;
     let breakpointOperator = document.getElementById("breakpoint-comparison").value;
@@ -103,47 +103,61 @@ function addBreakpoint(){
     let breakpointInputComparator = document.getElementById("breakpoint-input-comparator").value;
     let breakpointController = document.getElementById("breakpoint-controller-body");
     let valid = false;
-    if((breakpointType == "opcode" | breakpointType == "program-counter") &&
-    ((Number(breakpointInputValue) >= 0 && Number(breakpointInputValue) <= 0xFF))){
+    if ((breakpointType == "opcode" | breakpointType == "program-counter") &&
+        ((Number(breakpointInputValue) >= 0 && Number(breakpointInputValue) <= 0xFF))) {
         valid = true;
     }
-    else if(breakpointType == "memory" && 
-    ((Number(breakpointInputValue) >= 0 && Number(breakpointInputValue) <= 0xFFFF)) &&
-    ((Number(breakpointInputComparator) >= 0 && Number(breakpointInputComparator) <= 0xFF))){
+    else if (breakpointType == "memory" &&
+        ((Number(breakpointInputValue) >= 0 && Number(breakpointInputValue) <= 0xFFFF)) &&
+        ((Number(breakpointInputComparator) >= 0 && Number(breakpointInputComparator) <= 0xFF))) {
         valid = true;
     }
-    if(valid){
-    let newRow = document.createElement("tr");
-    
-    let newItem = document.createElement("td");
-    let newSubItem = document.createElement("input");
-    newSubItem.type = "checkbox";
-    newItem.appendChild(newSubItem);
-    newRow.appendChild(newItem);
+    if (valid) {
+        let newRow = document.createElement("tr");
 
-    newItem = document.createElement("td");
-    newItem.textContent = breakpointType;
-    newRow.appendChild(newItem);
+        let newItem = document.createElement("td");
+        let newSubItem = document.createElement("input");
+        newSubItem.type = "checkbox";
+        newItem.appendChild(newSubItem);
+        newRow.appendChild(newItem);
 
-    newItem = document.createElement("td");
-    newItem.textContent = breakpointInputValue.concat(" ", breakpointOperator.concat(" ", breakpointInputComparator));
-    newRow.appendChild(newItem);
+        newItem = document.createElement("td");
+        newItem.textContent = breakpointType;
+        newRow.appendChild(newItem);
 
-    newItem = document.createElement("td");
-    newSubItem = document.createElement("i");
-    newSubItem.classList.add()
-    newSubItem.classList.add("fa-solid");
-    newSubItem.classList.add("fa-trash");
-    newItem.appendChild(newSubItem);
-    newRow.appendChild(newItem);
+        newItem = document.createElement("td");
+        newItem.textContent = breakpointInputValue.concat(" ", breakpointOperator.concat(" ", breakpointInputComparator));
+        newRow.appendChild(newItem);
 
-    newSubItem.addEventListener("click", () =>{newRow.remove()});
+        newItem = document.createElement("td");
+        newSubItem = document.createElement("i");
+        newSubItem.classList.add()
+        newSubItem.classList.add("fa-solid");
+        newSubItem.classList.add("fa-trash");
+        newItem.appendChild(newSubItem);
+        newRow.appendChild(newItem);
 
-    breakpointController.appendChild(newRow);
+        newSubItem.addEventListener("click", () => { newRow.remove() });
+
+        breakpointController.appendChild(newRow);
     }
-    else{
+    else {
         breakpointControls.style.backgroundColor = "red";
     }
 }
 
+let breakpointType = document.getElementById("breakpoint-type");
+breakpointType.addEventListener("change", changeBreakpointType)
+
+function changeBreakpointType() {
+    let breakpointType = document.getElementById("breakpoint-type").value;
+    if (breakpointType == "opcode" | breakpointType == "program-counter") {
+        document.getElementById("breakpoint-comparison").style.display = "none";
+        document.getElementById("breakpoint-input-comparator").style.display = "none";
+    }
+    else if (breakpointType == "memory") {
+        document.getElementById("breakpoint-comparison").style.display = "inline";
+        document.getElementById("breakpoint-input-comparator").style.display = "inline";
+    }
+}
 
