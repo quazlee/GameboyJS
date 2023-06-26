@@ -89,6 +89,48 @@ class RomBank {
 
 export class Memory {
     constructor(romInput) {
+        this.romInput = null;
+        this.numRomBanks = null;
+        this.ramEnabled = null;
+        this.bankMode = null;
+
+        /** 0x0000-0x3FFF */
+        this.romZero = null;
+
+        /** 0x4000-0x7FFF */
+        this.romBank = null;
+
+        /** 0x8000-0x9FFF */
+        this.vram = null;
+
+        /** 0xA000-0xBFFF */
+        this.ram = null;
+
+        /** 0xC000-0xDFFF */
+        this.wram = null;
+
+        /** 0xE000-0xFDFF
+         * ECHO RAM SO IGNORE IT
+        */
+
+        /** 0xFE00-0xFE9F */
+        this.oam = null;
+
+        /** 0xFEA0-0xFEFF
+         * NOT USABLE SO IGNORE IT
+        */
+
+        /** 0xFF00-0xFF7F */
+        this.io = null;
+
+        /** 0xFF80-0xFFFE */
+        this.hram = null;
+
+        /** 0xFFFF */
+        this.ie = null;
+    }
+
+    initialize(romInput){
         this.romInput = romInput;
         let exponent = this.romInput[0x0148];
         this.numRomBanks = (2 ^ exponent);
@@ -146,6 +188,7 @@ export class Memory {
             else if (location < 0xE000)
                 return this.wram.getData(location - 0xC000);
             else if (location < 0xFE00)
+                // return this.ram.getData(location - 0x9F00);
                 throw new Error("Invalid Location: ECHO RAM");
             else if (location < 0xFEA0)
                 return this.oam.getData(location - 0xFE00);

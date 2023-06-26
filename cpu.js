@@ -1,6 +1,5 @@
 import { RegisterCollection } from "./registercollection.js"
 import { Memory } from "./memory.js";
-import { registerViewer } from "./debug.js";
 import { twosComplement } from "./utility.js";
 import { Gpu } from "./gpu.js";
 
@@ -17,14 +16,23 @@ const registerID = {
 }
 
 export class Cpu {
-    constructor(romArray) {
+    constructor() {
         this.registers = new RegisterCollection();
         this.opcodeTicks = 0;
-        this.memory = new Memory(romArray);
+        this.memory = null;
         this.programCounter = 0x0100;
         this.stackPointer = 0xFFFE;
         this.gpu = new Gpu(this.memory);
         this.frameReady = false;
+        this.debug = null;
+    }
+
+    setMemory(memory){
+        this.memory = memory;
+    }
+
+    setDebug(debug){
+        this.debug = debug;
     }
 
     fetch() {
@@ -35,8 +43,6 @@ export class Cpu {
 
     decode() {
         let currentOpcode = this.fetch();
-        document.getElementById("program-counter").textContent = "0x".concat((this.programCounter - 1).toString(16));
-        document.getElementById("current-opcode").textContent = "0x".concat(currentOpcode.toString(16));
         try {
             if (currentOpcode > 255 || currentOpcode < 0) {
                 throw new Error("Value Must Be Between 0x00 and 0xFF");
@@ -48,7 +54,6 @@ export class Cpu {
 
         let high = currentOpcode >> 4;
         let low = currentOpcode & 0xF;
-
 
         return [high, low];
     }
@@ -671,9 +676,9 @@ export class Cpu {
                             this.rst(0x20);
                             break;
                         case 0x8://TODO
-                        {
-                        }
-                            
+                            {
+                            }
+
                             break;
                         case 0x9:
                             this.programCounter = this.registers.getRegisterDouble(registerID.H, registerID.L);
@@ -879,30 +884,23 @@ export class Cpu {
         }
 
         this.memory.writeMemory(this.registers.getRegisterDouble(registerID.H, registerID.L), this.registers.getRegister(registerID.HL))//Assign the new HL value back to register
-        this.debugRomOutput();
-        this.debugClock();
-        this.debugMemoryWatch();
-        registerViewer(this.registers);
+
+
     }
 
     tickClock(cycles) {
-        this.opcodeTicks += cycles;
-        if(this.opcodeTicks > 70223){
-            this.frameReady = true;
-        }
-        // for (let i = 0; i < cycles; i++) {
-        //     if(this.opcodeTicks == 70223){
-        //         this.opcodeTicks = 0;
-        //         // this.gpu.populateViewPort();
-        //         this.frameReady = true;
-        //     }
-
-        //     this.opcodeTicks++;
-
-        //     if(this.opcodeTicks % 2 == 1){
-        //         // this.gpu.populateTileMaps();
-        //     }
+        // this.opcodeTicks += cycles;
+        // if(this.opcodeTicks > 70223){
+        //     this.frameReady = true;
         // }
+        for (let i = 0; i < cycles; i += 2) {
+            if (this.opcodeTicks == 70224) {
+                this.opcodeTicks = 0;
+                this.frameReady = true;
+            }
+
+            this.opcodeTicks += 2;
+        }
     }
 
     jumpConditional(condition) {
@@ -1024,29 +1022,6 @@ export class Cpu {
         }
         else {
             this.tickClock(8);
-        }
-    }
-
-    debugRomOutput() {
-        if (this.memory.readMemory(0xFF02) == 0x0081) {
-            let debugElement = document.getElementById("debug");
-            let debugText = debugElement.textContent;
-            let nextCharacter = this.memory.readMemory(0xFF01);
-            debugText.concat("", nextCharacter)
-            console.log(nextCharacter);
-        }
-    }
-
-    debugClock() {
-        let debugElement = document.getElementById("clock");
-        debugElement.textContent = this.opcodeTicks.toString();
-    }
-
-    debugMemoryWatch() {
-        let elements = document.getElementsByClassName("memory-watch");
-        for (let index = 0; index < elements.length; index++) {
-            elements[index].textContent = this.memory.readMemory(Number(elements[index].id));
-
         }
     }
 }

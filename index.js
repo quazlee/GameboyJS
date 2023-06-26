@@ -20,10 +20,10 @@ async function readRom(rom) {
 
 async function startGameboy() {
     let rom = this.files[0];
-    let romData = await readRom(rom);
-    gameboy.initialize(romData);
+    let romInput = await readRom(rom);
+    gameboy.initialize(romInput);
 
-    setInterval(gameboy.mainLoop.bind(gameboy), 16);
+    setInterval(gameboy.mainLoop.bind(gameboy), 17);
 }
 
 

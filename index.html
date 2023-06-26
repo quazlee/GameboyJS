@@ -56,30 +56,6 @@
                 </div>
             </div>
 
-            <!-- <div class="debug-tool">
-                <div id="step-controls">
-                    <select name="step-mode" id="step-mode" autocomplete="off">
-                        <option value="none" selected>Continuous</option>
-                        <option value="opcode">Opcode Step</option>
-                        <option value="frame">Frame Step</option>
-                        <option value="breakpoint">Breakpoint Mode</option>
-                    </select>
-                    <input type="button" value="Next Opcode" id="step-opcode" disabled autocomplete="off">
-                    <input type="button" value="Next Frame" disabled autocomplete="off">
-
-                    <div id="breakpoint-controls">
-                        <input type="text" name="breakpoint-input" id="breakpoint-input">
-                        <label for="breakpoint-input">Breakpoint Program Counter</label>
-                        <button id="breakpoint-input-submit">Submit</button>
-                    </div>
-
-                    <div class="tooltip">
-                        <i class="fa-solid fa-circle-question"></i>
-                        <span class="tooltip-text">Requires Restart to Change Mode</span>
-                    </div>
-                </div>
-            </div> -->
-
             <div class="debug-tool">
                 <div id="flow-controls">
                     <input type="button" value="Resume" disabled autocomplete="off">
@@ -110,6 +86,7 @@
                         placeholder="0x....">
                     <button id="breakpoint-input-submit">Submit</button>
                 </div>
+
                 <div id="table-wrapper">
                     <table id="breakpoint-controller">
                         <thead>
@@ -123,30 +100,6 @@
                         <tbody id="breakpoint-controller-body"></tbody>
                     </table>
                 </div>
-
-
-                <!-- <div id="breakpoint-controls-programcounter">
-                    <label for="breakpoint-input-programcounter">Breakpoint Program Counter</label>
-                    <input type="text" name="breakpoint-input-programcounter" id="breakpoint-input-programcounter">
-                    <button id="breakpoint-submit-programcounter">Submit</button>
-                    <div class="tooltip">
-                        <i class="fa-solid fa-circle-question"></i>
-                        <span class="tooltip-text">Four Digit Hex</span>
-                    </div>
-                </div>
-
-                <div id="breakpoint-controls-opcode">
-                    <label for="breakpoint-input-opcode">Breakpoint Opcode</label>
-                    <input type="text" name="breakpoint-input-opcode" id="breakpoint-input-opcode">
-                    <button id="breakpoint-submit-opcode">Submit</button>
-                    <div class="tooltip">
-                        <i class="fa-solid fa-circle-question"></i>
-                        <span class="tooltip-text">Two Digit Hex</span>
-                    </div>
-                </div> -->
-
-
-
             </div>
 
             <div class="debug-tool" id="debug"></div>
