@@ -24,3 +24,7 @@ th i{
     overflow:scroll;
     /* overflow-x: hidden; */
 }
+
+#breakpoint-value-one{
+    display: none;
+}

@@ -71,7 +71,7 @@
                         <option value="program-counter">Program Counter Value</option>
                     </select>
 
-                    <input type="text" name="breakpoint-input-value" id="breakpoint-input-value" placeholder="0x....">
+                    <input type="text" name="breakpoint-value-one" id="breakpoint-value-one" placeholder="0x....">
 
                     <select name="breakpoint-comparison" id="breakpoint-comparison">
                         <option value="=">=</option>
@@ -82,13 +82,12 @@
                         <option value="&#60;=">&#60;=</option>
                     </select>
 
-                    <input type="text" name="breakpoint-input-comparator" id="breakpoint-input-comparator"
-                        placeholder="0x....">
+                    <input type="text" name="breakpoint-value-two" id="breakpoint-value-two" placeholder="0x....">
                     <button id="breakpoint-input-submit">Submit</button>
                 </div>
 
                 <div id="table-wrapper">
-                    <table id="breakpoint-controller">
+                    <table id="breakpoint-table">
                         <thead>
                             <tr>
                                 <th>Enable</th>
@@ -97,7 +96,7 @@
                                 <th>Delete</th>
                             </tr>
                         </thead>
-                        <tbody id="breakpoint-controller-body"></tbody>
+                        <tbody id="breakpoint-table-body"></tbody>
                     </table>
                 </div>
             </div>

@@ -23,6 +23,7 @@ export class Debug {
         this.breakpointSubmit.addEventListener("click", this.addBreakpoint.bind(this));
         this.breakPoints = [];
         this.breakpointControls = document.getElementById("breakpoint-controls");
+        this.breakpointTable = document.getElementById("breakpoint-table");
 
     }
 
@@ -106,12 +107,12 @@ export class Debug {
         
         this.breakpointControls.style.backgroundColor = "";
 
-        let breakpointType = this.breakpointControls.getElementById("breakpoint-type").value;
-        let breakpointOperator = this.breakpointControls.getElementById("breakpoint-comparison").value;
-        let breakpointInputComparator = this.breakpointControls.getElementById("breakpoint-input-comparator").value;
-        let breakpointInputValue = this.breakpointControls.getElementById("breakpoint-input-value").value;
+        let breakpointType = document.getElementById("breakpoint-type").value;
+        let breakpointOperator = document.getElementById("breakpoint-comparison").value;
+        let breakpointInputComparator = document.getElementById("breakpoint-value-two").value;
+        let breakpointInputValue = document.getElementById("breakpoint-value-one").value;
         
-        let breakpointController = this.breakpointControls.getElementById("breakpoint-controller-body");
+        let breakpointController = document.getElementById("breakpoint-table-body");
 
         let valid = false;
         if ((breakpointType == "opcode" | breakpointType == "program-counter") &&
@@ -126,6 +127,14 @@ export class Debug {
 
         if (valid) {
             let newRow = document.createElement("tr");
+            newRow.setAttribute("type", breakpointType);
+            newRow.setAttribute("valueOne", breakpointType);
+            newRow.setAttribute("operation", breakpointType);
+            if (breakpointType == "memory")
+            {
+                newRow.setAttribute(valueTwo, breakpointType);
+            }
+            
 
             let newItem = document.createElement("td");
             let newSubItem = document.createElement("input");
@@ -134,10 +143,12 @@ export class Debug {
             newRow.appendChild(newItem);
 
             newItem = document.createElement("td");
+            newItem.classList.add("breakpoint-type");
             newItem.textContent = breakpointType;
             newRow.appendChild(newItem);
 
             newItem = document.createElement("td");
+            newItem.classList.add("breakpoint-value");
             newItem.textContent = breakpointInputValue.concat(" ", breakpointOperator.concat(" ", breakpointInputComparator));
             newRow.appendChild(newItem);
 
@@ -156,6 +167,22 @@ export class Debug {
         else {
             breakpointControls.style.backgroundColor = "red";
         }
+    }
+
+    getBreakpoints(){
+        this.breakPoints = [];
+        let breakpointValues = this.breakpointTable.getElementsByClassName("breakpoint-value");
+        let breakpointTypes = this.breakpointTable.getElementsByClassName("breakpoint-type");
+        for (let i = 0; i < breakpointValues.length; i++) {
+            // this.breakPoints.push({
+            //     "type" = 
+            // });
+            
+        }
+    }
+
+    checkBreakpoints(){
+    
     }
 }
 
@@ -188,13 +215,13 @@ breakpointType.addEventListener("change", changeBreakpointType)
 function changeBreakpointType() {
     let breakpointType = document.getElementById("breakpoint-type").value;
     if (breakpointType == "opcode" | breakpointType == "program-counter") {
-        document.getElementById("breakpoint-comparison").style.display = "none";
-        document.getElementById("breakpoint-input-comparator").style.display = "none";
+        document.getElementById("breakpoint-value-one").style.display = "none";
     }
     else if (breakpointType == "memory") {
-        document.getElementById("breakpoint-comparison").style.display = "inline";
-        document.getElementById("breakpoint-input-comparator").style.display = "inline";
+        document.getElementById("breakpoint-value-one").style.display = "inline";
     }
 }
+
+
 
 
