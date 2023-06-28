@@ -18,7 +18,7 @@ export class Debug {
 
         this.cpuClock = document.getElementById("clock");
 
-        
+
         this.breakpointSubmit = document.getElementById("breakpoint-input-submit");
         this.breakpointSubmit.addEventListener("click", this.addBreakpoint.bind(this));
         this.breakPoints = [];
@@ -104,37 +104,46 @@ export class Debug {
 
 
     addBreakpoint() {
-        
+        let pattern = /[0-9A-F]/g;
+
         this.breakpointControls.style.backgroundColor = "";
 
         let breakpointType = document.getElementById("breakpoint-type").value;
-        let breakpointOperator = document.getElementById("breakpoint-comparison").value;
-        let breakpointInputComparator = document.getElementById("breakpoint-value-two").value;
-        let breakpointInputValue = document.getElementById("breakpoint-value-one").value;
-        
+        let breakpointOperation = document.getElementById("breakpoint-comparison").value;
+        let breakpointValueTwo = document.getElementById("breakpoint-value-two").value.toUpperCase();
+        let breakpointValueOne = document.getElementById("breakpoint-value-one").value.toUpperCase();
+
         let breakpointController = document.getElementById("breakpoint-table-body");
 
-        let valid = false;
-        if ((breakpointType == "opcode" | breakpointType == "program-counter") &&
-            ((Number(breakpointInputValue) >= 0 && Number(breakpointInputValue) <= 0xFF))) {
-            valid = true;
+        let validOne = true;
+        let validTwo = true
+        if ((breakpointType == "opcode" || breakpointType == "program-counter") &&
+            (breakpointValueTwo == "" ||
+                breakpointValueTwo.length != breakpointValueTwo.match(pattern).length ||
+                breakpointValueTwo.length > 4)) {
+            validTwo = false;
         }
-        else if (breakpointType == "memory" &&
-            ((Number(breakpointInputValue) >= 0 && Number(breakpointInputValue) <= 0xFFFF)) &&
-            ((Number(breakpointInputComparator) >= 0 && Number(breakpointInputComparator) <= 0xFF))) {
-            valid = true;
+        if (breakpointType == "memory" &&
+            (breakpointValueOne == "" ||
+                breakpointValueOne.length != breakpointValueOne.match(pattern).length ||
+                breakpointValueOne.length > 4)) {
+            validOne = false;
+        }
+        if (breakpointType == "memory" &&
+            (breakpointValueTwo == "" ||
+                breakpointValueTwo.length != breakpointValueTwo.match(pattern).length ||
+                breakpointValueTwo.length > 2)) {
+            validTwo = false;
         }
 
-        if (valid) {
+        if (validOne && validTwo) {
             let newRow = document.createElement("tr");
             newRow.setAttribute("type", breakpointType);
-            newRow.setAttribute("valueOne", breakpointType);
-            newRow.setAttribute("operation", breakpointType);
-            if (breakpointType == "memory")
-            {
-                newRow.setAttribute(valueTwo, breakpointType);
+            newRow.setAttribute("valueTwo", breakpointValueTwo);
+            newRow.setAttribute("operation", breakpointOperation);
+            if (breakpointType == "memory") {
+                newRow.setAttribute("valueOne", breakpointValueOne);
             }
-            
 
             let newItem = document.createElement("td");
             let newSubItem = document.createElement("input");
@@ -149,7 +158,15 @@ export class Debug {
 
             newItem = document.createElement("td");
             newItem.classList.add("breakpoint-value");
-            newItem.textContent = breakpointInputValue.concat(" ", breakpointOperator.concat(" ", breakpointInputComparator));
+            if (breakpointType == "opcode") {
+                newItem.textContent = breakpointValueOne.concat(" ", breakpointOperation.concat(" ", breakpointValueTwo));
+            }
+            else if (breakpointType == "program-counter") {
+                newItem.textContent = breakpointValueOne.concat(" ", breakpointOperation.concat(" ", breakpointValueTwo));
+            }
+            else if (breakpointType == "memory") {
+                newItem.textContent = breakpointValueOne.concat(" ", breakpointOperation.concat(" ", breakpointValueTwo));
+            }
             newRow.appendChild(newItem);
 
             newItem = document.createElement("td");
@@ -164,12 +181,9 @@ export class Debug {
 
             breakpointController.appendChild(newRow);
         }
-        else {
-            breakpointControls.style.backgroundColor = "red";
-        }
     }
 
-    getBreakpoints(){
+    getBreakpoints() {
         this.breakPoints = [];
         let breakpointValues = this.breakpointTable.getElementsByClassName("breakpoint-value");
         let breakpointTypes = this.breakpointTable.getElementsByClassName("breakpoint-type");
@@ -177,12 +191,23 @@ export class Debug {
             // this.breakPoints.push({
             //     "type" = 
             // });
-            
+
         }
     }
 
-    checkBreakpoints(){
-    
+    checkBreakpointsOpcode() {
+        let opcode = this.cpu.currentOpcode;
+        this.breakpointTable.querySelectorAll("tr[type='opcode']")
+
+    }
+
+    checkBreakpointsProgramCounter() {
+        let programCounter = this.cpu.programCounter;
+        this.breakpointTable.getElementsByClassName("breakpoint-entry");
+    }
+
+    checkBreakpointsOpcodeMemory() {
+        this.breakpointTable.getElementsByClassName("breakpoint-entry");
     }
 }
 
