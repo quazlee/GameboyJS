@@ -1,5 +1,4 @@
 import { Gameboy } from "./gameboy.js"
-
 let gameboy = new Gameboy();
 
 let selectedRom = document.getElementById("romInput");

@@ -1,3 +1,15 @@
+const registerID = {
+    B: 0,
+    C: 1,
+    D: 2,
+    E: 3,
+    H: 4,
+    L: 5,
+    HL: 6,
+    A: 7,
+    F: 8
+}
+
 export class Debug {
     constructor(cpu, memory) {
         this.memory = memory;
@@ -24,6 +36,8 @@ export class Debug {
         this.breakPoints = [];
         this.breakpointControls = document.getElementById("breakpoint-controls");
         this.breakpointTable = document.getElementById("breakpoint-table");
+
+        this.debugLog = document.getElementById("log");
 
     }
 
@@ -59,15 +73,15 @@ export class Debug {
         this.currentOpcode.textContent = "0x".concat(currentOpcode.toString(16));
     }
 
-    // debugRomOutput(cpu) {
-    //     if (cpu.memory.readMemory(0xFF02) == 0x0081) {
-    //         let debugElement = document.getElementById("debug");
-    //         let debugText = debugElement.textContent;
-    //         let nextCharacter = cpu.memory.readMemory(0xFF01);
-    //         debugText.concat("", nextCharacter)
-    //         console.log(nextCharacter);
-    //     }
-    // }
+    debugRomOutput(cpu) {
+        if (cpu.memory.readMemory(0xFF02) == 0x0081) {
+            let debugElement = document.getElementById("debug");
+            let debugText = debugElement.textContent;
+            let nextCharacter = cpu.memory.readMemory(0xFF01);
+            debugText.concat("", nextCharacter)
+            console.log(nextCharacter);
+        }
+    }
 
     debugClock(cpu) {
         this.cpuClock.textContent = this.cpu.opcodeTicks.toString();
@@ -208,6 +222,47 @@ export class Debug {
 
     checkBreakpointsOpcodeMemory() {
         this.breakpointTable.getElementsByClassName("breakpoint-entry");
+    }
+
+    logger(){
+        let format2 = function (input) {
+            let number = input.toString(16);
+            let digits = 2 - number.length;
+            for (let i = 0; i < digits; i++) {
+                number = "0".concat(number);
+            }
+            return number.toUpperCase();
+        }
+
+        let format4 = function (input) {
+            let number = input.toString(16);
+            let digits = 4 - number.length;
+            for (let i = 0; i < digits; i++) {
+                number = "0".concat(number);
+            }
+            return number.toUpperCase();
+        }
+
+        let output = this.debugLog.value;
+        output += 
+        "A: " + format2(this.cpu.registers.getRegister(registerID.A)) + 
+        " F: " + format2(this.cpu.registers.getRegister(registerID.F)) + 
+        " B: " + format2(this.cpu.registers.getRegister(registerID.B)) + 
+        " C: " + format2(this.cpu.registers.getRegister(registerID.C)) + 
+        " D: " + format2(this.cpu.registers.getRegister(registerID.D)) + 
+        " E: " + format2(this.cpu.registers.getRegister(registerID.E)) + 
+        " H: " + format2(this.cpu.registers.getRegister(registerID.H)) + 
+        " L: " + format2(this.cpu.registers.getRegister(registerID.L)) + 
+        " SP: " + format4(this.cpu.stackPointer) + 
+        " PC: 00:" + format4(this.cpu.programCounter) + " (" + 
+        format2(this.memory.readMemory(this.cpu.programCounter)) + " " +
+        format2(this.memory.readMemory(this.cpu.programCounter + 1)) + " " +
+        format2(this.memory.readMemory(this.cpu.programCounter + 2)) + " " +
+        format2(this.memory.readMemory(this.cpu.programCounter + 3)) + ")" + 
+        "\r\n";
+
+        this.debugLog.value = output;
+
     }
 }
 

@@ -27,11 +27,11 @@ export class Cpu {
         this.debug = null;
     }
 
-    setMemory(memory){
+    setMemory(memory) {
         this.memory = memory;
     }
 
-    setDebug(debug){
+    setDebug(debug) {
         this.debug = debug;
     }
 
@@ -56,6 +56,56 @@ export class Cpu {
         let low = currentOpcode & 0xF;
 
         return [high, low];
+    }
+
+    interrupt() {
+        if (this.memory.readMemory(0xFFFF)) {
+            if (this.memory.readMemory(0xFFFF) & 1 && this.memory.readMemory(0xFF0F) & 1) {
+                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+                this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
+                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xf));
+                this.programCounter = 0x40;
+                this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 0));
+                this.tickClock(20);
+            }
+            if (this.memory.readMemory(0xFFFF) & 2 && this.memory.readMemory(0xFF0F) & 2) {
+                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+                this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
+                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xf));
+                this.programCounter = 0x48;
+                this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 1));
+                this.tickClock(20);
+            }
+            if (this.memory.readMemory(0xFFFF) & 4 && this.memory.readMemory(0xFF0F) & 4) {
+                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+                this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
+                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xf));
+                this.programCounter = 0x50;
+                this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 2));
+                this.tickClock(20);
+            }
+            if (this.memory.readMemory(0xFFFF) & 8 && this.memory.readMemory(0xFF0F) & 8) {
+                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+                this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
+                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xf));
+                this.programCounter = 0x58;
+                this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 3));
+                this.tickClock(20);
+            }
+            if (this.memory.readMemory(0xFFFF) & 16 && this.memory.readMemory(0xFF0F) & 16) {
+                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+                this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
+                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xf));
+                this.programCounter = 0x60;
+                this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 4));
+                this.tickClock(20);
+            }
+        }
     }
 
     execute([high, low]) {

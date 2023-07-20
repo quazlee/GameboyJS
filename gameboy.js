@@ -24,6 +24,8 @@ export class Gameboy {
 
     mainLoop() {
         while(this.cpu.frameReady == false){
+            this.debug.logger();
+            this.cpu.interrupt();
             this.currentOpcode = this.cpu.decode();
             this.cpu.execute(this.currentOpcode);
         }
@@ -31,7 +33,7 @@ export class Gameboy {
 
         document.getElementById("frames-elapsed").stepUp(1);
 
-        // this.debug.debugRomOutput(this.cpu);
+        this.debug.debugRomOutput(this.cpu);
         // this.debug.debugClock(this.cpu);
         // this.debug.debugMemoryWatch(this.cpu);
         // this.debug.registerViewer(this.cpu.registers);
