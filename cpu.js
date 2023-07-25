@@ -116,7 +116,7 @@ export class Cpu {
         //get the (HL) value
         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
         this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
-        if (((high << 8) | low) != 0xCB) {
+        if (((high << 4) | low) != 0xCB) {
             switch (high) {
                 case 0x0:
                     switch (low) {
@@ -162,7 +162,7 @@ export class Cpu {
                         case 0x6:
                             {
                                 this.registers.setRegister(registerID.B, this.fetch());
-                                this.tickClock(4);
+                                this.tickClock(8);
                                 break;
                             }
                         case 0x7:
@@ -205,7 +205,7 @@ export class Cpu {
                             break;
                         case 0xE:
                             this.registers.setRegister(registerID.C, this.fetch());
-                            this.tickClock(4);
+                            this.tickClock(8);
                             break;
                         case 0xF:
                             this.registers.rotateRightCircularA();
@@ -264,7 +264,7 @@ export class Cpu {
                         case 0x6:
                             {
                                 this.registers.setRegister(registerID.D, this.fetch());
-                                this.tickClock(4);
+                                this.tickClock(8);
                                 break;
                             }
                         case 0x7:
@@ -307,7 +307,7 @@ export class Cpu {
                             break;
                         case 0xE:
                             this.registers.setRegister(registerID.E, this.fetch());
-                            this.tickClock(4);
+                            this.tickClock(8);
                             break;
                         case 0xF:
                             this.registers.rotateRightA();
@@ -818,6 +818,7 @@ export class Cpu {
                             break;
                         case 0x5:
                             this.push(registerID.A, registerID.F);
+                            this.tickClock(4);
                             break;
                         case 0x6:
                             this.registers.orA(this.fetch());
@@ -1043,6 +1044,7 @@ export class Cpu {
         let high = this.fetch();
         if (condition) {
             this.programCounter = (high << 8) | low;
+            this.tickClock(16);
         }
         else {
             this.tickClock(12);
@@ -1138,7 +1140,7 @@ export class Cpu {
         this.registers.assignZero(bitValue);
         this.registers.clearFlag(6);
         this.registers.setFlag(5);
-        if (low == 0x6) {
+        if (register == 0x6) {
             this.tickClock(12);
         }
         else {
@@ -1149,7 +1151,7 @@ export class Cpu {
     res(bit, register) {
         let registerValue = this.registers.getRegister(register);
         registerValue &= ~(1 << bit);
-        if (low == 0x6) {
+        if (register == 0x6) {
             this.tickClock(16);
         }
         else {
@@ -1159,7 +1161,7 @@ export class Cpu {
     set(bit, register) {
         let registerValue = this.registers.getRegister(register);
         registerValue |= (1 << bit);
-        if (low == 0x6) {
+        if (register == 0x6) {
             this.tickClock(16);
         }
         else {
