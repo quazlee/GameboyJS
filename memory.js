@@ -128,6 +128,7 @@ export class Memory {
 
         /** 0xFFFF */
         this.ie = null;
+
     }
 
     initialize(romInput){
@@ -173,6 +174,62 @@ export class Memory {
         this.ie = new MemoryBlock(1);
 
         this.readRom();
+
+        this.writeMemory(0xFF00, 0xCF);
+        this.writeMemory(0xFF01, 0x00);
+        this.writeMemory(0xFF02, 0x7E);
+        this.io.setData(4, 0xAB);
+        this.writeMemory(0xFF05, 0x00);
+        this.writeMemory(0xFF06, 0x00);
+        this.writeMemory(0xFF07, 0xF8);
+        this.writeMemory(0xFF0F, 0xE1);
+        this.writeMemory(0xFF10, 0x80);
+        this.writeMemory(0xFF11, 0xBF);
+        this.writeMemory(0xFF12, 0xF3);
+        this.writeMemory(0xFF13, 0xFF);
+        this.writeMemory(0xFF14, 0xBF);
+        this.writeMemory(0xFF16, 0x3F);
+        this.writeMemory(0xFF17, 0x00);
+        this.writeMemory(0xFF18, 0xFF);
+        this.writeMemory(0xFF19, 0xBF);
+        this.writeMemory(0xFF1A, 0x7F);
+        this.writeMemory(0xFF1B, 0xFF);
+        this.writeMemory(0xFF1C, 0x9F);
+        this.writeMemory(0xFF1D, 0xFF);
+        this.writeMemory(0xFF1E, 0xBF);
+        this.writeMemory(0xFF20, 0xFF);
+        this.writeMemory(0xFF21, 0x00);
+        this.writeMemory(0xFF22, 0x00);
+        this.writeMemory(0xFF23, 0xBF);
+        this.writeMemory(0xFF24, 0x77);
+        this.writeMemory(0xFF25, 0xF3);
+        this.writeMemory(0xFF26, 0xF1);
+        this.writeMemory(0xFF40, 0x91);
+        this.writeMemory(0xFF41, 0x85);
+        this.writeMemory(0xFF42, 0x00);
+        this.writeMemory(0xFF43, 0x00);
+        this.writeMemory(0xFF44, 0x00);
+        this.writeMemory(0xFF45, 0x00);
+        this.writeMemory(0xFF46, 0xFF);
+        this.writeMemory(0xFF47, 0xFC);
+        this.writeMemory(0xFF48, 0x00);
+        this.writeMemory(0xFF49, 0x00);
+        this.writeMemory(0xFF4A, 0x00);
+        this.writeMemory(0xFF4B, 0x00);
+        this.writeMemory(0xFF4D, 0xFF);
+        this.writeMemory(0xFF4F, 0xFF);
+        this.writeMemory(0xFF51, 0xFF);
+        this.writeMemory(0xFF52, 0xFF);
+        this.writeMemory(0xFF53, 0xFF);
+        this.writeMemory(0xFF54, 0xFF);
+        this.writeMemory(0xFF55, 0xFF);
+        this.writeMemory(0xFF56, 0xFF);
+        this.writeMemory(0xFF68, 0xFF);
+        this.writeMemory(0xFF69, 0xFF);
+        this.writeMemory(0xFF6A, 0xFF);
+        this.writeMemory(0xFF6B, 0xFF);
+        this.writeMemory(0xFF70, 0xFF);
+        this.writeMemory(0xFFFF, 0x00);
     }
 
     readMemory(location) {
@@ -247,13 +304,18 @@ export class Memory {
             else if (location < 0xFF00)
                 throw new Error("Invalid Location: PROHIBITED");
             else if (location < 0xFF80){
-                this.io.setData(location - 0xFF00, value);
+                if(location == 0xFF04){
+                    this.io.setData(location - 0xFF00, 0);
+                }
+                else{
+                    this.io.setData(location - 0xFF00, value);
+                }
             }
             else if (location < 0xFFFF){
                 this.hram.setData(location - 0xFF80, value);
             }
             else if (location == 0xFFFF){
-                this.ie.setData(0, 1);
+                this.ie.setData(0, value);
             }
             else{
                 throw new Error("Invalid Location: OUT OF BOUNDS");

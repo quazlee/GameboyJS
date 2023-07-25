@@ -38,6 +38,7 @@ export class Debug {
         this.breakpointTable = document.getElementById("breakpoint-table");
 
         this.debugLog = document.getElementById("log");
+        this.logString = "";
 
     }
 
@@ -243,8 +244,7 @@ export class Debug {
             return number.toUpperCase();
         }
 
-        let output = this.debugLog.value;
-        output += 
+        this.logString += 
         "A: " + format2(this.cpu.registers.getRegister(registerID.A)) + 
         " F: " + format2(this.cpu.registers.getRegister(registerID.F)) + 
         " B: " + format2(this.cpu.registers.getRegister(registerID.B)) + 
@@ -260,9 +260,6 @@ export class Debug {
         format2(this.memory.readMemory(this.cpu.programCounter + 2)) + " " +
         format2(this.memory.readMemory(this.cpu.programCounter + 3)) + ")" + 
         "\r\n";
-
-        this.debugLog.value = output;
-
     }
 }
 

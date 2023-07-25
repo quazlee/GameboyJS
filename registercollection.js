@@ -139,7 +139,7 @@ export class RegisterCollection {
         this.assignCarry(oldValue, this.data[registerID.A]);
     }
 
-    adcA(targetValue){
+    adcA(targetValue) {
         let oldValue = this.data[registerID.A]
         oldValue = this.sum(oldValue, targetValue);
         this.data[registerID.A] = this.sum(oldValue, this.getFlag(4));
@@ -149,7 +149,7 @@ export class RegisterCollection {
         this.assignCarry(oldValue, this.data[registerID.A]);
     }
 
-    subA(targetValue){
+    subA(targetValue) {
         let oldValue = this.data[registerID.A]
         this.data[registerID.A] = this.difference(oldValue, targetValue);
         this.assignZero(this.data[registerID.A]);
@@ -158,7 +158,7 @@ export class RegisterCollection {
         this.assignCarry(oldValue, this.data[registerID.A]);
     }
 
-    sbcA(targetValue){
+    sbcA(targetValue) {
         let oldValue = this.data[registerID.A]
         oldValue = this.difference(oldValue, targetValue);
         this.data[registerID.A] = this.difference(oldValue, this.getFlag(4));
@@ -168,7 +168,7 @@ export class RegisterCollection {
         this.assignCarry(oldValue, this.data[registerID.A]);
     }
 
-    andA(targetValue){
+    andA(targetValue) {
         let oldValue = this.data[registerID.A];
         this.data[registerID.A] = oldValue & targetValue;
         this.assignZero(this.data[registerID.A]);
@@ -177,7 +177,7 @@ export class RegisterCollection {
         this.clearFlag(4);
     }
 
-    xorA(targetValue){
+    xorA(targetValue) {
         let oldValue = this.data[registerID.A];
         this.data[registerID.A] = oldValue ^ targetValue;
         this.assignZero(this.data[registerID.A]);
@@ -186,7 +186,7 @@ export class RegisterCollection {
         this.clearFlag(4);
     }
 
-    orA(targetValue){
+    orA(targetValue) {
         let oldValue = this.data[registerID.A];
         this.data[registerID.A] = oldValue | targetValue;
         this.assignZero(this.data[registerID.A]);
@@ -195,7 +195,7 @@ export class RegisterCollection {
         this.clearFlag(4);
     }
 
-    cpA(targetValue){
+    cpA(targetValue) {
         let comparison = this.data[registerID.A];
         comparison = this.difference(comparison, targetValue);
         this.assignZero(comparison);
@@ -253,11 +253,11 @@ export class RegisterCollection {
     }
 
     rotateRightA() {
-        let carry = getCarry();
+        let carry = this.getFlag(4);
         if (this.data[registerID.A] & 1)
-            setCarry();
+            this.setFlag(4);
         else
-            clearCarry();
+            this.clearFlag(4);
         this.data[registerID.A] = (this.data[registerID.A] >> 1 | (carry << 7));
         this.clearFlag(7);
         this.clearFlag(6);
@@ -265,11 +265,11 @@ export class RegisterCollection {
     }
 
     rotateLeftA() {
-        let carry = getCarry();
+        let carry = this.getFlag(4);
         if (this.data[registerID.A] & 1)
-            setCarry();
+            this.setFlag(4);
         else
-            clearCarry();
+            this.clearFlag(4);
         this.data[registerID.A] = (this.data[registerID.A] << 1 | (carry));
         this.clearFlag(7);
         this.clearFlag(6);
@@ -293,12 +293,12 @@ export class RegisterCollection {
     }
 
     rotateRight(register) {
-        let registerValue = this.data[register]; 
-        let carry = getCarry();
+        let registerValue = this.data[register];
+        let carry = this.getFlag(4);
         if (registerValue & 1)
-            setCarry();
+            this.setFlag(4);
         else
-            clearCarry();
+            this.clearFlag(4);
         registerValue = (registerValue >> 1 | (carry << 7));
         this.data[register] = registerValue;
         this.assignZero(registerValue);
@@ -307,12 +307,12 @@ export class RegisterCollection {
     }
 
     rotateLeft(register) {
-        let registerValue = this.data[register]; 
-        let carry = getCarry();
+        let registerValue = this.data[register];
+        let carry = this.getFlag(4);
         if (registerValue & 1)
-            setCarry();
+            this.setFlag(4);
         else
-            clearCarry();
+            this.clearFlag(4);
         this.registerValue = (this.registerValue << 1 | (carry));
         this.data[register] = registerValue;
         this.assignZero(registerValue);
@@ -321,7 +321,7 @@ export class RegisterCollection {
     }
 
     rotateRightCircular(register) {
-        let registerValue = this.data[register]; 
+        let registerValue = this.data[register];
         registerValue = ((registerValue >> 1) | (registerValue << 7));
         this.data[register] = registerValue;
         this.clearFlag(7);
@@ -331,7 +331,7 @@ export class RegisterCollection {
     }
 
     rotateLeftCircular(register) {
-        let registerValue = this.data[register]; 
+        let registerValue = this.data[register];
         registerValue = ((registerValue << 1) | (registerValue >> 7));
         this.data[register] = registerValue;
         this.clearFlag(7);

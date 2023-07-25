@@ -30,7 +30,7 @@ export class Gameboy {
             this.cpu.execute(this.currentOpcode);
         }
         this.cpu.frameReady = false;
-
+        document.getElementById("log").value = this.debug.logString;
         document.getElementById("frames-elapsed").stepUp(1);
 
         this.debug.debugRomOutput(this.cpu);
