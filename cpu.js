@@ -843,14 +843,15 @@ export class Cpu {
                                 errorHandler(e);
                             }
                             break;
-                        case 0xA://TODO
-                            try {
-                                throw new Error("TODO");
+                        case 0xA:
+                            {
+                                let low = this.fetch();
+                                let high = this.fetch();
+                                let value = this.memory.readMemory((high << 8) | low);
+                                this.registers.setRegister(registerID.A, value);
+                                this.tickClock(16);
+                                break;
                             }
-                            catch (e) {
-                                errorHandler(e);
-                            }
-                            break;
                         case 0xB:
                             this.memory.writeMemory(0xFFFF, 1);
                             break;
