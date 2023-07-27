@@ -800,14 +800,8 @@ export class Cpu {
                             this.registers.setRegister(registerID.A, this.memory.readMemory(0xFF00 + this.fetch()));
                             this.tickClock(12);
                             break;
-                        case 0x1://TODO FLAGS
+                        case 0x1:
                             this.pop(registerID.A, registerID.F);
-                            try {
-                                throw new Error("TODO");
-                            }
-                            catch (e) {
-                                errorHandler(e);
-                            }
                             break;
                         case 0x2:
                             this.registers.setRegister(registerID.A, this.memory.readMemory(0xFF00 + this.registers.getRegister(registerID.C)));
@@ -910,10 +904,52 @@ export class Cpu {
                     }
                     break;
                 case 0x2:
+                    if (low < 8) {
+                        this.registers.SLA(low);
+                        if (low == 0x6) {
+                            this.tickClock(16);
+                        }
+                        else {
+                            this.tickClock(8);
+                        }
+                    }
+                    else {
+                        this.registers.SRA(low - 8);
+                        if (low == 0xE) {
+                            this.tickClock(16);
+                        }
+                        else {
+                            this.tickClock(8);
+                        }
+                    }
                     break;
                 case 0x3:
+                    if (low < 8) {
+                        this.registers.swap(low);
+                        if (low == 0x6) {
+                            this.tickClock(16);
+                        }
+                        else {
+                            this.tickClock(8);
+                        }
+                    }
+                    else {
+                        this.registers.SRL(low - 8);
+                        if (low == 0xE) {
+                            this.tickClock(16);
+                        }
+                        else {
+                            this.tickClock(8);
+                        }
+                    }
                     break;
                 case 0x4:
+                    if (low < 8) {
+                        this.bit(0, low);
+                    }
+                    else {
+                        this.bit(1, low - 8);
+                    }
                     break;
                 case 0x5:
                     if (low < 8) {
@@ -1120,6 +1156,9 @@ export class Cpu {
         let low = this.memory.readMemory(this.stackPointer);
         this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
         let high = this.memory.readMemory(this.stackPointer);
+        if(register2 == registerID.F){
+            low = low & 0xF0;
+        }
         this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
         this.registers.setRegisterDouble(register1, register2, high, low);
         this.tickClock(12);

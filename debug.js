@@ -76,11 +76,10 @@ export class Debug {
 
     debugRomOutput(cpu) {
         if (cpu.memory.readMemory(0xFF02) == 0x0081) {
-            let debugElement = document.getElementById("debug");
-            let debugText = debugElement.textContent;
+            let debugElement = document.getElementById("blargg");
             let nextCharacter = cpu.memory.readMemory(0xFF01);
-            debugText.concat("", nextCharacter)
-            console.log(nextCharacter);
+            debugElement.value =  debugElement.value + String.fromCharCode(nextCharacter);
+            // console.log(nextCharacter);
         }
     }
 
@@ -261,6 +260,19 @@ export class Debug {
         format2(this.memory.readMemory(this.cpu.programCounter + 3)) + ")" + 
         "\r\n";
     }
+
+    download(filename, text) {
+        var element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        element.setAttribute('download', filename);
+      
+        element.style.display = 'none';
+        document.body.appendChild(element);
+      
+        element.click();
+      
+        document.body.removeChild(element);
+      }
 }
 
 // Memory Watch

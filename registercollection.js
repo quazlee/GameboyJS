@@ -243,7 +243,7 @@ export class RegisterCollection {
         let high = this.data[registerHigh];
         let low = this.data[registerLow];
         let combined = (high << 8) | low;
-        combined - 1;
+        combined = this.differenceDouble(combined, 1);
         if (combined < 0) {
             combined += 65536;
         }
@@ -339,6 +339,62 @@ export class RegisterCollection {
         this.clearFlag(5);
         assignCarryShiftRight(registerValue);
     }
+    SLA(register) {
+        let registerValue = this.getRegister(register);
+        if (registerValue & 0x80 == 0x80){
+            this.setFlag(4);
+        }
+        else{
+            this.clearFlag(4);
+        }
+        registerValue = (registerValue << 1) & 0xFF;
+        this.assignZero(registerValue);
+        this.clearFlag(6);
+        this.clearFlag(5);
+        this.setRegister(register, registerValue);
+    }
+
+    SRA(register) {
+        let registerValue = this.data[register];
+        if (registerValue & 0x01 == 0x01){
+            this.setFlag(4);
+        }
+        else{
+            this.clearFlag(4);
+        }
+        let bitSeven = (registerValue & 0x80);
+        registerValue = registerValue >> 1;
+        if(bitSeven = 0x80){
+            registerValue | bitSeven;
+        }
+    }
+
+    SRL(register) {
+        let registerValue = this.data[register];
+        if (registerValue & 0x01 == 0x01){
+            this.setFlag(4);
+        }
+        else{
+            this.clearFlag(4);
+        }
+        registerValue = registerValue >> 1;
+        this.assignZero(registerValue);
+        this.clearFlag(6);
+        this.clearFlag(5);
+        this.setRegister(register, registerValue);
+    }
+
+    swap(register) {
+        let registerValue = this.data[register];
+        let high = registerValue >> 4;
+        let low = registerValue & 0xF;
+        registerValue = (low << 4) | high;
+        this.assignZero(registerValue);
+        this.clearFlag(6);
+        this.clearFlag(5);
+        this.clearFlag(4);
+        this.setRegister(register, registerValue);
+    }
 
     // //FLAG FUCNTIONS START
     setFlag(flag) {
@@ -388,7 +444,7 @@ export class RegisterCollection {
     }
 
     assignCarry(value1, value2) {
-        if (value1 < value2)
+        if (value1 > value2)
             this.setFlag(4);
         else
             this.clearFlag(4);

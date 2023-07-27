@@ -9,8 +9,9 @@ export class Gameboy {
         this.cpu = new Cpu();
         this.gpu = null;
         this.debug = new Debug(this.cpu, this.memory);
-        let currentOpcode = null;
-        let lastLoopEnd = 0;
+        this.currentOpcode = null;
+        this.lastLoopEnd = 0;
+        this.numLoops = 0;
     }
 
     initialize(romInput){
@@ -28,6 +29,10 @@ export class Gameboy {
             this.cpu.interrupt();
             this.currentOpcode = this.cpu.decode();
             this.cpu.execute(this.currentOpcode);
+        }
+        this.numLoops++;
+        if(this.numLoops == 5){
+            this.debug.download("Log", this.debug.logString);
         }
         this.cpu.frameReady = false;
         document.getElementById("log").value = this.debug.logString;
