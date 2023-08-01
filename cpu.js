@@ -111,8 +111,6 @@ export class Cpu {
     }
 
     execute([high, low]) {
-        // let [high, low] = this.decode();
-
         //get the (HL) value
         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
         this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
