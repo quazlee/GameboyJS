@@ -15,6 +15,7 @@ export class Gameboy {
     }
 
     initialize(romInput){
+        this.memory.setMemory(this.cpu);
         this.memory.initialize(romInput)
         this.cpu.setMemory(this.memory);
         this.cpu.setDebug(this.debug);
@@ -35,6 +36,8 @@ export class Gameboy {
             this.debug.download("Log", this.debug.logString);
         }
         this.cpu.frameReady = false;
+
+        this.gpu.drawTileMaps();
         document.getElementById("log").value = this.debug.logString;
         document.getElementById("frames-elapsed").stepUp(1);
 
@@ -47,6 +50,6 @@ export class Gameboy {
     testTile(){
         let tile = [0x3c, 0x7e, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x7e, 0x5e, 0x7e, 0x0a, 0x7c, 0x56, 0x38, 0x7c]
         let decodedTile = this.gpu.decodeTile(tile)
-        this.gpu.drawTile(decodedTile);
+        this.gpu.drawTile(decodedTile, 0, 0, this.gpu.ctx);
     }
 }

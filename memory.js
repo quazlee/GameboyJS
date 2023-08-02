@@ -1,4 +1,5 @@
 import { errorHandler } from "./errorhandler.js";
+import { Cpu } from "./cpu.js";
 class MemoryBlock {
     constructor(size) {
         this.size = size
@@ -89,6 +90,7 @@ class RomBank {
 
 export class Memory {
     constructor(romInput) {
+        this.cpu = null;
         this.romInput = null;
         this.numRomBanks = null;
         this.ramEnabled = null;
@@ -131,7 +133,11 @@ export class Memory {
 
     }
 
-    initialize(romInput){
+    setMemory(cpu){
+        this.cpu = cpu;
+    }
+
+    initialize(romInput) {
         this.romInput = romInput;
         let exponent = this.romInput[0x0148];
         this.numRomBanks = (2 ^ exponent);
@@ -210,7 +216,8 @@ export class Memory {
         this.writeMemory(0xFF43, 0x00);
         this.writeMemory(0xFF44, 0x00);
         this.writeMemory(0xFF45, 0x00);
-        this.writeMemory(0xFF46, 0xFF);
+        // this.writeMemory(0xFF46, 0xFF);
+        this.io.setData(0x46, 0xFF)
         this.writeMemory(0xFF47, 0xFC);
         this.writeMemory(0xFF48, 0x00);
         this.writeMemory(0xFF49, 0x00);
@@ -288,8 +295,8 @@ export class Memory {
             else if (location < 0xA000) {
                 this.vram.setData(location - 0x8000, value);
             }
-            else if (location < 0xC000 ){
-                if(this.ramEnabled){
+            else if (location < 0xC000) {
+                if (this.ramEnabled) {
                     this.ram.setData(location - 0xA000, value);
                 }
             }
@@ -303,21 +310,30 @@ export class Memory {
             }
             else if (location < 0xFF00)
                 throw new Error("Invalid Location: PROHIBITED");
-            else if (location < 0xFF80){
-                if(location == 0xFF04){
+            else if (location < 0xFF80) {
+                if (location == 0xFF04) {
                     this.io.setData(location - 0xFF00, 0);
                 }
-                else{
+                else if (location == 0xFF46) {
+                    this.io.setData(location - 0xFF00, value);
+                    let source = Math.floor((value / 0x100));
+                    for (let i = 0; i < 160; i++) {
+                        this.oam[i] = this.readMemory(source);
+                        source++;
+                        this.cpu.tickClock(1)
+                    }
+                }
+                else {
                     this.io.setData(location - 0xFF00, value);
                 }
             }
-            else if (location < 0xFFFF){
+            else if (location < 0xFFFF) {
                 this.hram.setData(location - 0xFF80, value);
             }
-            else if (location == 0xFFFF){
+            else if (location == 0xFFFF) {
                 this.ie.setData(0, value);
             }
-            else{
+            else {
                 throw new Error("Invalid Location: OUT OF BOUNDS");
             }
         }
@@ -345,7 +361,7 @@ export class Memory {
 
             romArrayIndex++;
 
-            
+
         }
         this.romBank.changeBank(0);
     }

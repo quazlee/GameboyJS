@@ -16,34 +16,39 @@ export class Gpu {
 
         this.mode = 2;
         this.scanLine = 0;
-        this.scanLineTicks;
+        this.scanLineTicks = 0;
+
+        this.tileMapOne = document.getElementById("tile-map-one");
+        this.tileMapOneCtx = this.tileMapOne.getContext("2d");
+        this.tileMapOne = document.getElementById("tile-map-two");
+        this.tileMapTwoCtx = this.tileMapOne.getContext("2d");
     }
 
-    populateViewPort(){
-        for (let y = 0; y < 18; y++) {
-            for (let x = 0; x < 20; x++) {
-                this.viewport[y][x] = this.tileMapA[y][x];
-            }
-        }
-    }
+    
+    // populateViewPort(){
+    //     for (let y = 0; y < 18; y++) {
+    //         for (let x = 0; x < 20; x++) {
+    //             this.viewport[y][x] = this.tileMapA[y][x];
+    //         }
+    //     }
+    // }
 
-    populateTileMaps(){
-        let mapLocation = 0x9800;
-        for (let y = 0; y < 32; y++) {
-            for (let x = 0; x < 32; x++) {
-                this.tileMapA[y][x] = this.memory.readMemory(mapLocation);
-                mapLocation++;
-            }
-        }
+    // populateTileMaps(){
+    //     let mapLocation = 0x9800;
+    //     for (let y = 0; y < 32; y++) {
+    //         for (let x = 0; x < 32; x++) {
+    //             this.tileMapA[y][x] = this.memory.readMemory(mapLocation);
+    //             mapLocation++;
+    //         }
+    //     }
 
-        for (let y = 0; y < 32; y++) {
-            for (let x = 0; x < 32; x++) {
-                this.tileMapB[y][x] = this.memory.readMemory(mapLocation);
-                mapLocation++;
-            }
-        }
-
-    }
+    //     for (let y = 0; y < 32; y++) {
+    //         for (let x = 0; x < 32; x++) {
+    //             this.tileMapB[y][x] = this.memory.readMemory(mapLocation);
+    //             mapLocation++;
+    //         }
+    //     }
+    // }
 
     decodeTile(tile) {
         let tileA = [];
@@ -68,23 +73,41 @@ export class Gpu {
         return generatedTile;
     }
 
-    drawTile(tile) {
+    drawTile(tile, xOffset, yOffset, ctx) {
         for (let y = 0; y < 8; y++) {
             for (let x = 0; x < 8; x++) {
                 let color = tile[y][x];
-                this.drawToCanvas(10 + x, 10 + y, this.colorPalette[color]);
+                this.drawToCanvas(x + xOffset, y + yOffset, this.colorPalette[color], ctx);
             }
         }
     }
 
-    drawToCanvas(x, y, color) {
-        this.ctx.strokeStyle = color;
-        this.ctx.fillStyle = color;
-        this.ctx.fillRect(x, y, 1, 1);
+    drawToCanvas(x, y, color, ctx) {
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, 1, 1);
     }
     
     oamScan(){
         
+    }
+
+    drawTileMaps(){
+        for (let y = 0; y < 11; y++) {
+            for (let x = 0; x < 12; x++) {
+                let tile = this.decodeTile(this.memory.readMemory(0x8000 + (x * 16) + (y * 192)));
+                this.drawTile(tile, x * 8, y * 8, this.tileMapOneCtx);
+                console.log((0x8000 + (x * 16) + (y * 192)).toString(16));
+            }
+        }
+
+        for (let y = 0; y < 11; y++) {
+            for (let x = 0; x < 12; x++) {
+                let tile = this.decodeTile(this.memory.readMemory(0x8800 + (x * 16) + (y * 192)));
+                this.drawTile(tile, x * 8, y * 8, this.tileMapTwoCtx);
+                console.log((0x8000 + (x * 16) + (y * 192)).toString(16));
+            }
+        }
     }
 }
 

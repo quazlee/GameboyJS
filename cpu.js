@@ -328,10 +328,9 @@ export class Cpu {
                             }
                         case 0x2:
                             {
-                                let location = this.registers.getRegisterDouble(registerID.H, registerID.L);
                                 this.registers.incRegisterDouble(registerID.H, registerID.L);
                                 let value = this.registers.getRegister(registerID.A);
-                                this.memory.writeMemory(location, value)
+                                this.registers.setRegister(registerID.HL, value);
                                 this.tickClock(8);
                                 break;
                             }
@@ -378,7 +377,7 @@ export class Cpu {
                             }
                         case 0xA:
                             {
-                                let value = this.memory.readMemory(this.registers.getRegisterDouble(registerID.H, registerID.L));
+                                let value = this.registers.getRegister(registerID.HL);
                                 this.registers.incRegisterDouble(registerID.H, registerID.L);
                                 this.registers.setRegister(registerID.A, value);
                                 this.tickClock(8);
@@ -431,10 +430,9 @@ export class Cpu {
                             break;
                         case 0x2:
                             {
-                                let location = this.registers.getRegisterDouble(registerID.H, registerID.L);
                                 this.registers.decRegisterDouble(registerID.H, registerID.L);
                                 let value = this.registers.getRegister(registerID.A);
-                                this.memory.writeMemory(location, value)
+                                this.registers.setRegister(registerID.HL, value);
                                 this.tickClock(8);
                                 break;
                             }
@@ -475,7 +473,7 @@ export class Cpu {
                             }
                         case 0xA:
                             {
-                                let value = this.memory.readMemory(this.registers.getRegisterDouble(registerID.H, registerID.L));
+                                let value = this.registers.getRegister(registerID.HL);
                                 this.registers.decRegisterDouble(registerID.H, registerID.L);
                                 this.registers.setRegister(registerID.A, value);
                                 this.tickClock(8);
