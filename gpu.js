@@ -20,11 +20,11 @@ export class Gpu {
 
         this.tileMapOne = document.getElementById("tile-map-one");
         this.tileMapOneCtx = this.tileMapOne.getContext("2d");
-        this.tileMapOne = document.getElementById("tile-map-two");
-        this.tileMapTwoCtx = this.tileMapOne.getContext("2d");
+        this.tileMapTwo = document.getElementById("tile-map-two");
+        this.tileMapTwoCtx = this.tileMapTwo.getContext("2d");
     }
 
-    
+
     // populateViewPort(){
     //     for (let y = 0; y < 18; y++) {
     //         for (let x = 0; x < 20; x++) {
@@ -87,44 +87,53 @@ export class Gpu {
         ctx.fillStyle = color;
         ctx.fillRect(x, y, 1, 1);
     }
-    
-    oamScan(){
-        
+
+    oamScan() {
+
     }
 
-    drawTileMaps(){
+    drawTileMaps() {
+        this.tileMapOneCtx.clearRect(0, 0, this.tileMapOne.width, this.tileMapOne.height);
         for (let y = 0; y < 11; y++) {
             for (let x = 0; x < 12; x++) {
-                let tile = this.decodeTile(this.memory.readMemory(0x8000 + (x * 16) + (y * 192)));
-                this.drawTile(tile, x * 8, y * 8, this.tileMapOneCtx);
-                console.log((0x8000 + (x * 16) + (y * 192)).toString(16));
+                let base = 0x8000 + (x * 16) + (y * 192);
+                let tileSet = [];
+                for (let i = 0; i < 16; i++) {
+                    tileSet.push(this.memory.readMemory(base + i));
+                }
+                let decodedTile = this.decodeTile(tileSet);
+                this.drawTile(decodedTile, x * 8, y * 8, this.tileMapOneCtx);
             }
         }
-
+        this.tileMapTwoCtx.clearRect(0, 0, this.tileMapTwo.width, this.tileMapTwo.height);
         for (let y = 0; y < 11; y++) {
             for (let x = 0; x < 12; x++) {
-                let tile = this.decodeTile(this.memory.readMemory(0x8800 + (x * 16) + (y * 192)));
-                this.drawTile(tile, x * 8, y * 8, this.tileMapTwoCtx);
-                console.log((0x8000 + (x * 16) + (y * 192)).toString(16));
+                let base = 0x8800 + (x * 16) + (y * 192);
+                let tileSet = [];
+                for (let i = 0; i < 16; i++) {
+                    tileSet.push(this.memory.readMemory(base + i));
+                }
+                let decodedTile = this.decodeTile(tileSet);
+                this.drawTile(decodedTile, x * 8, y * 8, this.tileMapTwoCtx);
             }
         }
     }
 }
 
 
-class pixelFetcher{
-    constructor(){
+class pixelFetcher {
+    constructor() {
         this.data = Array(8);
         this.pushIndex;
         this.popIndex;
         this.nextPixel;
     }
 
-    push(){
+    push() {
 
     }
 
-    pop(){
+    pop() {
 
     }
 }

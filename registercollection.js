@@ -208,10 +208,11 @@ export class RegisterCollection {
 
     addHL(value) {
         let oldValue = this.getRegisterDouble(registerID.H, registerID.L)
-        this.data[registerID.HL] = this.sum(oldValue, value)
+        let sum = this.sumDouble(oldValue, value);
+        this.setRegisterDouble(registerID.H, registerID.L, sum >> 8, sum & 0xFF);
         this.clearFlag(6);
         this.assignHalfcarryAddDouble(oldValue, value);
-        this.assignCarry(oldValue, value);
+        this.assignCarryDouble(oldValue, value);
     }
 
     incRegister(register) {
@@ -426,7 +427,7 @@ export class RegisterCollection {
     }
 
     assignHalfcarryAddDouble(value1, value2) {
-        if ((((value1 & 0xff) + (value2 & 0xff)) & 0x0100) == 0x0100)
+        if ((((value1 & 0xfff) + (value2 & 0xfff)) & 0x1000) == 0x1000)
             this.setFlag(5);
         else
             this.clearFlag(5);
@@ -439,7 +440,7 @@ export class RegisterCollection {
             this.clearFlag(5);
     }
     assignHalfcarrySubDouble(value1, value2) {
-        if ((((value1 & 0xff) - (value2 & 0xff)) & 0x0100) == 0x0100)
+        if ((((value1 & 0xfff) - (value2 & 0xfff)) & 0x1000) == 0x1000)
             this.setFlag(5);
         else
             this.clearFlag(5);
@@ -447,6 +448,13 @@ export class RegisterCollection {
 
     assignCarry(value1, value2) {
         if ((value1 + value2) > 255)
+            this.setFlag(4);
+        else
+            this.clearFlag(4);
+    }
+
+    assignCarryDouble(value1, value2) {
+        if ((value1 + value2) > 65535)
             this.setFlag(4);
         else
             this.clearFlag(4);

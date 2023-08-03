@@ -39,6 +39,7 @@ export class Debug {
 
         this.debugLog = document.getElementById("log");
         this.logString = "";
+        this.blarggString = "";
 
     }
 
@@ -78,7 +79,9 @@ export class Debug {
         if (cpu.memory.readMemory(0xFF02) == 0x0081) {
             let debugElement = document.getElementById("blargg");
             let nextCharacter = cpu.memory.readMemory(0xFF01);
-            debugElement.value =  debugElement.value + String.fromCharCode(nextCharacter);
+            this.blarggString = this.blarggString + String.fromCharCode(nextCharacter);
+            cpu.memory.writeMemory(0xFF02, 0x0);
+            // debugElement.value =  debugElement.value + String.fromCharCode(nextCharacter);
             // console.log(nextCharacter);
         }
     }

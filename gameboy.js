@@ -32,13 +32,14 @@ export class Gameboy {
             this.cpu.execute(this.currentOpcode);
         }
         this.numLoops++;
-        if(this.numLoops == 5){
+        if(this.numLoops == 150){
             this.debug.download("Log", this.debug.logString);
+            this.debug.download("serial", this.debug.blarggString);
         }
         this.cpu.frameReady = false;
 
         this.gpu.drawTileMaps();
-        document.getElementById("log").value = this.debug.logString;
+        // document.getElementById("log").value = this.debug.logString;
         document.getElementById("frames-elapsed").stepUp(1);
 
         this.debug.debugRomOutput(this.cpu);

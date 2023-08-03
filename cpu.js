@@ -171,8 +171,13 @@ export class Cpu {
                             }
                         case 0x8:
                             {
-                                let location = (this.fetch() << 8) | this.fetch();
-                                this.memory.writeMemory(location, this.stackPointer);
+                                let low = this.fetch();
+                                let high = this.fetch();
+                                let location = (high << 8) | low;
+                                let lowStack = this.stackPointer & 0xFF;
+                                let highStack = this.stackPointer >> 8;
+                                this.memory.writeMemory(location, lowStack);
+                                this.memory.writeMemory(location + 1, highStack);
                                 this.tickClock(20);
                                 break;
                             }
@@ -407,13 +412,10 @@ export class Cpu {
                                 this.tickClock(8);
                                 break;
                             }
-                        case 0xF://TODO CPL
-                            try {
-                                throw new Error("TODO");
-                            }
-                            catch (e) {
-                                errorHandler(e);
-                            }
+                        case 0xF:
+                            this.registers.setRegister(registerID.A, (this.registers.getRegister(registerID.A) ^ 0xFF));
+                            this.registers.setFlag(6);
+                            this.registers.setFlag(5);
                             break;
                     }
                     break;
@@ -437,7 +439,7 @@ export class Cpu {
                                 break;
                             }
                         case 0x3:
-                            this.stackPointer = this.registers.sum(this.stackPointer, 1);
+                            this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
                             this.tickClock(8);
                             break;
                         case 0x4:
@@ -454,13 +456,11 @@ export class Cpu {
                                 this.tickClock(12);
                                 break;
                             }
-                        case 0x7://TODO SCF
-                            try {
-                                throw new Error("TODO");
-                            }
-                            catch (e) {
-                                errorHandler(e);
-                            }
+                        case 0x7:
+                            this.registers.clearFlag(6);
+                            this.registers.clearFlag(5);
+                            this.registers.setFlag(4);
+                            this.tickClock(4);
                             break;
                         case 0x8:
                             this.jumpRelativeConditional(this.registers.getFlag(4));
@@ -480,7 +480,7 @@ export class Cpu {
                                 break;
                             }
                         case 0xB:
-                            this.stackPointer = this.registers.difference(this.stackPointer, 1);
+                            this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
                             this.tickClock(8);
                             break;
                         case 0xC:
@@ -501,13 +501,17 @@ export class Cpu {
                                 this.tickClock(8);
                                 break;
                             }
-                        case 0xF://TODO CCF
-                            try {
-                                throw new Error("TODO");
+                        case 0xF:
+                            let carry = this.registers.getFlag(4);
+                            if (carry ^ 1) {
+                                this.registers.setFlag(4);
                             }
-                            catch (e) {
-                                errorHandler(e);
+                            else {
+                                this.registers.clearFlag(4);
                             }
+                            this.registers.clearFlag(6);
+                            this.registers.clearFlag(5);
+                            this.tickClock(4);
                             break;
                     }
                     break;
@@ -546,7 +550,7 @@ export class Cpu {
                         }
                     }
                     else if (low < 8) {
-                        this.memory.writeMemory(registerID.HL, low);
+                        this.registers.setRegister(registerID.HL, this.registers.getRegister(low));
                         this.tickClock(8);
                     }
                     else {
@@ -760,15 +764,25 @@ export class Cpu {
                         case 0x7:
                             this.rst(0x20);
                             break;
-                        case 0x8://TODO
-                            try {
-                                throw new Error("TODO");
+                        case 0x8:
+                            {
+                                let value = this.fetch();
+                                let signedValue = twosComplement(value);
+                                let oldStack = this.stackPointer
+                                if (signedValue > 0) {
+                                    this.stackPointer = this.registers.sumDouble(oldStack, signedValue);
+                                }
+                                else
+                                {
+                                    this.stackPointer = this.registers.differenceDouble(oldStack, signedValue * -1);
+                                }
+                                this.registers.assignHalfcarryAdd(oldStack & 0xFF, value);
+                                this.registers.assignCarry(oldStack & 0xFF, value);
+                                this.registers.clearFlag(7);
+                                this.registers.clearFlag(6);
+                                this.tickClock(16);
+                                break;
                             }
-                            catch (e) {
-                                errorHandler(e);
-                            }
-
-                            break;
                         case 0x9:
                             this.programCounter = this.registers.getRegisterDouble(registerID.H, registerID.L);
                             this.tickClock(4);
@@ -817,21 +831,39 @@ export class Cpu {
                         case 0x7:
                             this.rst(0x30);
                             break;
-                        case 0x8://TODO
-                            try {
-                                throw new Error("TODO");
+                        case 0x8:
+                            {
+                                let value = this.fetch();
+                                let signedValue = twosComplement(value);
+                                let newValue = 0;
+                                if (signedValue > 0) {
+                                    newValue = this.registers.sumDouble(this.stackPointer, signedValue)
+                                }
+                                else
+                                {
+                                    newValue = this.registers.differenceDouble(this.stackPointer, signedValue * -1)
+                                }
+                                this.registers.setRegisterDouble(registerID.H, registerID.L, newValue >> 8, newValue & 0xFF);
+                                this.registers.assignHalfcarryAdd(this.stackPointer & 0xFF, value);
+                                this.registers.assignCarry(this.stackPointer & 0xFF, value);
+                                this.registers.clearFlag(7);
+                                this.registers.clearFlag(6);
+                                this.tickClock(16);
+                                break;
+                                // let addend = twosComplement(this.fetch());
+                                // let value = this.registers.sumDouble(this.stackPointer, addend);
+                                // this.registers.setRegisterDouble(registerID.H, registerID.L, value >> 8, value & 0xFF);
+                                // this.registers.clearFlag(7);
+                                // this.registers.clearFlag(6);
+                                // this.registers.assignHalfcarryAdd(this.stackPointer & 0xFF, addend);
+                                // this.registers.assignCarry(this.stackPointer & 0xFF, addend);
+                                // this.tickClock(12);
+                                // break;
                             }
-                            catch (e) {
-                                errorHandler(e);
-                            }
-                            break;
-                        case 0x9://TODO
-                            try {
-                                throw new Error("TODO");
-                            }
-                            catch (e) {
-                                errorHandler(e);
-                            }
+
+                        case 0x9:
+                            this.stackPointer = this.registers.getRegisterDouble(registerID.H, registerID.L);
+                            this.tickClock(8);
                             break;
                         case 0xA:
                             {
@@ -1037,8 +1069,9 @@ export class Cpu {
                     break;
             }
         }
-
-        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL))//Assign the new HL value back to register
+        if (tempHLLocation > 0x7FFF) {
+            this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL))//Assign the new HL value back to register
+        }
 
 
     }
@@ -1054,17 +1087,15 @@ export class Cpu {
                 this.frameReady = true;
             }
 
-            
-
             this.opcodeTicks++;
 
-            if(this.opcodeTicks % 4 == 0){
+            if (this.opcodeTicks % 4 == 0) {
                 this.sysClock = this.registers.sumDouble(this.sysClock, 1);
                 this.memory.io.setData(0x4, this.sysClock >> 8);
             }
 
-            if(this.opcodeTicks % 456 == 0){
-                if(this.memory.io.getData(0x44) == 153){
+            if (this.opcodeTicks % 456 == 0) {
+                if (this.memory.io.getData(0x44) == 153) {
                     this.memory.io.setData(0x44, 0);
                 }
                 this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
@@ -1152,7 +1183,7 @@ export class Cpu {
         let low = this.memory.readMemory(this.stackPointer);
         this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
         let high = this.memory.readMemory(this.stackPointer);
-        if(register2 == registerID.F){
+        if (register2 == registerID.F) {
             low = low & 0xF0;
         }
         this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
