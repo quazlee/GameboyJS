@@ -7,7 +7,7 @@ export class Gameboy {
     constructor() {
         this.memory = new Memory();
         this.cpu = new Cpu();
-        this.gpu = null;
+        this.gpu = new Gpu();
         this.debug = new Debug(this.cpu, this.memory);
         this.currentOpcode = null;
         this.lastLoopEnd = 0;
@@ -19,26 +19,29 @@ export class Gameboy {
         this.memory.initialize(romInput)
         this.cpu.setMemory(this.memory);
         this.cpu.setDebug(this.debug);
+        this.cpu.setGpu(this.gpu);
 
-        this.gpu = new Gpu(this.memory)
+        // this.gpu = new Gpu();
+        this.gpu.setMemory(this.memory);
         this.testTile();
     }
 
     mainLoop() {
         while(this.cpu.frameReady == false){
-            this.debug.logger();
+            // this.debug.logger();
             this.cpu.interrupt();
             this.currentOpcode = this.cpu.decode();
             this.cpu.execute(this.currentOpcode);
         }
         this.numLoops++;
         if(this.numLoops == 150){
-            this.debug.download("Log", this.debug.logString);
-            this.debug.download("serial", this.debug.blarggString);
+            // this.debug.download("Log", this.debug.logString);
+            // this.debug.download("serial", this.debug.blarggString);
         }
         this.cpu.frameReady = false;
 
         this.gpu.drawTileMaps();
+        this.gpu.drawBackgroundMaps();
         // document.getElementById("log").value = this.debug.logString;
         document.getElementById("frames-elapsed").stepUp(1);
 

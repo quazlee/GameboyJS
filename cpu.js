@@ -23,7 +23,7 @@ export class Cpu {
         this.memory = null;
         this.programCounter = 0x0100;
         this.stackPointer = 0xFFFE;
-        this.gpu = new Gpu(this.memory);
+        this.gpu = null;
         this.frameReady = false;
         this.debug = null;
         this.sysClock = 0xAB00;
@@ -35,6 +35,10 @@ export class Cpu {
 
     setDebug(debug) {
         this.debug = debug;
+    }
+
+    setGpu(gpu){
+        this.gpu = gpu;
     }
 
     fetch() {
@@ -1077,29 +1081,26 @@ export class Cpu {
     }
 
     tickClock(cycles) {
-        // this.opcodeTicks += cycles;
-        // if(this.opcodeTicks > 70223){
-        //     this.frameReady = true;
-        // }
         for (let i = 0; i < cycles; i++) {
             if (this.opcodeTicks == 70224) {
                 this.opcodeTicks = 0;
                 this.frameReady = true;
             }
-
+            this.gpu.cycle();
             this.opcodeTicks++;
 
+            //Div Timer
             if (this.opcodeTicks % 4 == 0) {
                 this.sysClock = this.registers.sumDouble(this.sysClock, 1);
                 this.memory.io.setData(0x4, this.sysClock >> 8);
             }
 
-            if (this.opcodeTicks % 456 == 0) {
-                if (this.memory.io.getData(0x44) == 153) {
-                    this.memory.io.setData(0x44, 0);
-                }
-                this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
-            }
+            // if (this.opcodeTicks % 456 == 0) {
+            //     if (this.memory.io.getData(0x44) == 153) {
+            //         this.memory.io.setData(0x44, 0);
+            //     }
+            //     this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
+            // }
         }
     }
 

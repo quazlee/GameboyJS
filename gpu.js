@@ -1,6 +1,9 @@
+import { twosComplement } from "./utility.js";
+import { Memory } from "./memory.js";
+
 export class Gpu {
-    constructor(memory) {
-        this.memory = memory;
+    constructor() {
+        this.memory = null;
         this.canvas = document.getElementById("gameboyCanvas");
         this.ctx = this.canvas.getContext("2d");
         this.screenWidth = 160;
@@ -10,10 +13,6 @@ export class Gpu {
             "rgba(86, 86, 86 1)",
             "rgba(0, 0, 0, 1)"];
 
-        this.tileMapA = [...Array(32)].map(() => Array(32));
-        this.tileMapB = [...Array(32)].map(() => Array(32));
-        this.viewport = [...Array(18)].map(() => Array(20));
-
         this.mode = 2;
         this.scanLine = 0;
         this.scanLineTicks = 0;
@@ -22,33 +21,30 @@ export class Gpu {
         this.tileMapOneCtx = this.tileMapOne.getContext("2d");
         this.tileMapTwo = document.getElementById("tile-map-two");
         this.tileMapTwoCtx = this.tileMapTwo.getContext("2d");
+
+        this.backgroundOne = document.getElementById("background-one");
+        this.backgroundOneCtx = this.backgroundOne.getContext("2d");
+        this.backgroundTwo = document.getElementById("background-two");
+        this.backgroundTwoCtx = this.backgroundTwo.getContext("2d");
+
+        this.oamLocation = 0xFE00;
+        this.oamBuffer = [];
+
+        this.xPos = 0;
+
+        this.backgroundFetchStep = 1;
+        this.backgroundFetchBuffer = [];
+
+        this.spriteFetchStep = 1;
+        this.spriteFetchBuffer = [];
+
+        this.backgroundOneBase = 0x9800;
+        this.backgroundTwoBase = 0x9C00;
     }
 
-
-    // populateViewPort(){
-    //     for (let y = 0; y < 18; y++) {
-    //         for (let x = 0; x < 20; x++) {
-    //             this.viewport[y][x] = this.tileMapA[y][x];
-    //         }
-    //     }
-    // }
-
-    // populateTileMaps(){
-    //     let mapLocation = 0x9800;
-    //     for (let y = 0; y < 32; y++) {
-    //         for (let x = 0; x < 32; x++) {
-    //             this.tileMapA[y][x] = this.memory.readMemory(mapLocation);
-    //             mapLocation++;
-    //         }
-    //     }
-
-    //     for (let y = 0; y < 32; y++) {
-    //         for (let x = 0; x < 32; x++) {
-    //             this.tileMapB[y][x] = this.memory.readMemory(mapLocation);
-    //             mapLocation++;
-    //         }
-    //     }
-    // }
+    setMemory(memory) {
+        this.memory = memory;
+    }
 
     decodeTile(tile) {
         let tileA = [];
@@ -88,9 +84,106 @@ export class Gpu {
         ctx.fillRect(x, y, 1, 1);
     }
 
-    oamScan() {
-
+    getSpriteHeight() {
+        let spriteSize = ((this.memory.io.getData(0x44) & 0x4) >> 2);
+        if (spriteSize) {
+            return 16;
+        }
+        else {
+            return 8;
+        }
     }
+
+    cycle() {
+        if (this.mode == 2) {
+            this.oamScan();
+            this.scanLineTicks += 2;
+            if (this.scanLineTicks == 80) {
+                this.mode = 3;
+            }
+        }
+        else if (this.mode == 3) {
+            if (this.backgroundFetchStep == 1) {
+                let scy = this.memory.io.getData(0x42);
+                let scx = this.memory.io.getData(0x43);
+                let wy = this.memory.io.getData(0x4A);
+                let wx = this.memory.io.getData(0x4B);
+                let lcdc = this.memory.io.getData(0x40);
+                let windowEnable = (lcdc & 0x20) >> 4;
+
+                let backgroundMapBase = 0;
+                if ((lcdc & 0x8) >> 3) {
+                    backgroundMapBase = 0x9C00;
+                }
+                else {
+                    backgroundMapBase = 0x9800;
+                }
+                let windowMapBase = 0;
+                if ((lcdc & 0x40) >> 6) {
+                    windowMapBase = 0x9C00;
+                }
+                else {
+                    windowMapBase = 0x9800;
+                }
+
+
+                if (windowEnable && (scx + this.xPos) > wx && (scy + this.yPos) > wy) {
+
+                }
+                else {
+
+                }
+                let currentMap = ;
+                let tileNumber = a;
+            }
+            else if (this.backgroundFetchStep == 2) {
+
+            }
+            else if (this.backgroundFetchStep == 3) {
+
+            }
+            else if (this.backgroundFetchStep == 4) {
+
+            }
+            this.scanLineTicks += 2;
+        }
+        else if (this.mode == 0) {
+            this.scanLineTicks += 2;
+            if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) < 143) {
+                this.mode = 2;
+                this.scanLineTicks = 0;
+                this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
+            }
+            else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 143) {
+                this.mode = 1;
+                this.scanLineTicks = 0;
+                this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
+            }
+        }
+        else if (this.mode == 1) {
+            this.scanLineTicks += 2;
+            if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) < 153) {
+                this.scanLineTicks = 0;
+                this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
+            }
+            else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 153) {
+                this.scanLineTicks = 0;
+                this.mode = 2;
+                this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
+            }
+        }
+    }
+
+    oamScan() {
+        let ly = this.memory.readMemory(0xFF44);
+        let spriteX = this.memory.readMemory(this.oamLocation + 1);
+        let spriteY = this.memory.readMemory(this.oamLocation);
+        if (spriteX > 0 && ly + 16 >= spriteY && ly + 16 < spriteY + this.getSpriteHeight() && this.oamBuffer.length < 10) {
+            this.oamBuffer.push(this.oamLocation);
+        }
+        this.oamLocation += 4;
+    }
+
 
     drawTileMaps() {
         this.tileMapOneCtx.clearRect(0, 0, this.tileMapOne.width, this.tileMapOne.height);
@@ -118,22 +211,32 @@ export class Gpu {
             }
         }
     }
-}
 
+    drawBackgroundMaps() {
+        this.backgroundOneCtx.clearRect(0, 0, this.backgroundOne.width, this.backgroundOne.height);
+        for (let y = 0; y < 32; y++) {
+            for (let x = 0; x < 32; x++) {
+                let tileNumber = this.memory.readMemory(this.backgroundOneBase + (x) + (y * 32));
+                let tileSet = [];
+                for (let i = 0; i < 16; i++) {
+                    tileSet.push(this.memory.readMemory(0x8000 + (tileNumber * 16) + i));
+                }
+                let decodedTile = this.decodeTile(tileSet);
+                this.drawTile(decodedTile, x * 8, y * 8, this.backgroundOneCtx);
+            }
+        }
 
-class pixelFetcher {
-    constructor() {
-        this.data = Array(8);
-        this.pushIndex;
-        this.popIndex;
-        this.nextPixel;
-    }
-
-    push() {
-
-    }
-
-    pop() {
-
+        this.backgroundTwoCtx.clearRect(0, 0, this.backgroundTwo.width, this.backgroundTwo.height);
+        for (let y = 0; y < 32; y++) {
+            for (let x = 0; x < 32; x++) {
+                let tileNumber = this.memory.readMemory(this.backgroundTwoBase + (x) + (y * 32));
+                let tileSet = [];
+                for (let i = 0; i < 16; i++) {
+                    tileSet.push(this.memory.readMemory(0x8000 + (twosComplement(tileNumber) * 16) + i));
+                }
+                let decodedTile = this.decodeTile(tileSet);
+                this.drawTile(decodedTile, x * 8, y * 8, this.backgroundTwoCtx);
+            }
+        }
     }
 }
