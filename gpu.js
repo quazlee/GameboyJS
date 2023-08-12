@@ -42,10 +42,19 @@ export class Gpu {
         this.backgroundTwoBase = 0x9C00;
     }
 
+    /**
+     * Sets memory reference.
+     * @param {*} memory 
+     */
     setMemory(memory) {
         this.memory = memory;
     }
 
+    /**
+     * Generates an 8x8 tile from 16 bytes of sequential data.
+     * @param {*} tile - array of 16 bytes of data.
+     * @returns 
+     */
     decodeTile(tile) {
         let tileA = [];
         let tileB = [];
@@ -78,12 +87,23 @@ export class Gpu {
         }
     }
 
+    /**
+     * Draws a pixel to a given canvas at an (x,y) location in a given color
+     * @param {*} x 
+     * @param {*} y 
+     * @param {*} color 
+     * @param {*} ctx 
+     */
     drawToCanvas(x, y, color, ctx) {
         ctx.strokeStyle = color;
         ctx.fillStyle = color;
         ctx.fillRect(x, y, 1, 1);
     }
 
+    /**
+     * Checks what sprite height should be used.
+     * @returns sprite height
+     */
     getSpriteHeight() {
         let spriteSize = ((this.memory.io.getData(0x44) & 0x4) >> 2);
         if (spriteSize) {
@@ -133,8 +153,8 @@ export class Gpu {
                 else {
 
                 }
-                let currentMap = ;
-                let tileNumber = a;
+                // let currentMap = ;
+                // let tileNumber = a;
             }
             else if (this.backgroundFetchStep == 2) {
 
@@ -174,6 +194,9 @@ export class Gpu {
         }
     }
 
+    /**
+     * Checks if the next OAM sprite should be pushed to the buffer.
+     */
     oamScan() {
         let ly = this.memory.readMemory(0xFF44);
         let spriteX = this.memory.readMemory(this.oamLocation + 1);
@@ -184,7 +207,9 @@ export class Gpu {
         this.oamLocation += 4;
     }
 
-
+    /**
+     * Used to draw tile maps for the debug tools.
+     */
     drawTileMaps() {
         this.tileMapOneCtx.clearRect(0, 0, this.tileMapOne.width, this.tileMapOne.height);
         for (let y = 0; y < 11; y++) {
@@ -212,6 +237,9 @@ export class Gpu {
         }
     }
 
+    /**
+     * Used to draw background and window maps for the debug tools.
+     */
     drawBackgroundMaps() {
         this.backgroundOneCtx.clearRect(0, 0, this.backgroundOne.width, this.backgroundOne.height);
         for (let y = 0; y < 32; y++) {
@@ -226,17 +254,17 @@ export class Gpu {
             }
         }
 
-        this.backgroundTwoCtx.clearRect(0, 0, this.backgroundTwo.width, this.backgroundTwo.height);
-        for (let y = 0; y < 32; y++) {
-            for (let x = 0; x < 32; x++) {
-                let tileNumber = this.memory.readMemory(this.backgroundTwoBase + (x) + (y * 32));
-                let tileSet = [];
-                for (let i = 0; i < 16; i++) {
-                    tileSet.push(this.memory.readMemory(0x8000 + (twosComplement(tileNumber) * 16) + i));
-                }
-                let decodedTile = this.decodeTile(tileSet);
-                this.drawTile(decodedTile, x * 8, y * 8, this.backgroundTwoCtx);
-            }
-        }
+        // this.backgroundTwoCtx.clearRect(0, 0, this.backgroundTwo.width, this.backgroundTwo.height);
+        // for (let y = 0; y < 32; y++) {
+        //     for (let x = 0; x < 32; x++) {
+        //         let tileNumber = this.memory.readMemory(this.backgroundTwoBase + (x) + (y * 32));
+        //         let tileSet = [];
+        //         for (let i = 0; i < 16; i++) {
+        //             tileSet.push(this.memory.readMemory(0x8000 + (twosComplement(tileNumber) * 16) + i));
+        //         }
+        //         let decodedTile = this.decodeTile(tileSet);
+        //         this.drawTile(decodedTile, x * 8, y * 8, this.backgroundTwoCtx);
+        //     }
+        // }
     }
 }

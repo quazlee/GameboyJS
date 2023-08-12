@@ -75,6 +75,10 @@ export class Debug {
         this.currentOpcode.textContent = "0x".concat(currentOpcode.toString(16));
     }
 
+    /**
+     * Used by Blargg CPU test suite.
+     * @param {cpu} cpu 
+     */
     debugRomOutput(cpu) {
         if (cpu.memory.readMemory(0xFF02) == 0x0081) {
             let debugElement = document.getElementById("blargg");

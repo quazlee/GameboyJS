@@ -14,21 +14,24 @@ export class Gameboy {
         this.numLoops = 0;
     }
 
+    /**
+     * Sets the ROM. Sets various references.
+     * @param {*} romInput 
+     */
     initialize(romInput){
         this.memory.setMemory(this.cpu);
         this.memory.initialize(romInput)
         this.cpu.setMemory(this.memory);
         this.cpu.setDebug(this.debug);
         this.cpu.setGpu(this.gpu);
-
-        // this.gpu = new Gpu();
         this.gpu.setMemory(this.memory);
+        
         this.testTile();
     }
 
     mainLoop() {
         while(this.cpu.frameReady == false){
-            // this.debug.logger();
+            // this.debug.logger(); 
             this.cpu.interrupt();
             this.currentOpcode = this.cpu.decode();
             this.cpu.execute(this.currentOpcode);
@@ -40,7 +43,7 @@ export class Gameboy {
         }
         this.cpu.frameReady = false;
 
-        this.gpu.drawTileMaps();
+        // this.gpu.drawTileMaps();
         this.gpu.drawBackgroundMaps();
         // document.getElementById("log").value = this.debug.logString;
         document.getElementById("frames-elapsed").stepUp(1);
@@ -51,6 +54,9 @@ export class Gameboy {
         // this.debug.registerViewer(this.cpu.registers);
     }
 
+    /**
+     * Draws a test sprite on the canvas to test gpu functions.
+     */
     testTile(){
         let tile = [0x3c, 0x7e, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x7e, 0x5e, 0x7e, 0x0a, 0x7c, 0x56, 0x38, 0x7c]
         let decodedTile = this.gpu.decodeTile(tile)

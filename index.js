@@ -17,6 +17,7 @@ async function readRom(rom) {
     });
 }
 
+
 async function startGameboy() {
     let rom = this.files[0];
     let romInput = await readRom(rom);
