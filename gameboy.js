@@ -31,14 +31,14 @@ export class Gameboy {
 
     mainLoop() {
         while(this.cpu.frameReady == false){
-            // this.debug.logger(); 
+            this.debug.logger(); 
             this.cpu.interrupt();
             this.currentOpcode = this.cpu.decode();
             this.cpu.execute(this.currentOpcode);
         }
         this.numLoops++;
         if(this.numLoops == 150){
-            // this.debug.download("Log", this.debug.logString);
+            this.debug.download("Log", this.debug.logString);
             // this.debug.download("serial", this.debug.blarggString);
         }
         this.cpu.frameReady = false;

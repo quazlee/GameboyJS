@@ -133,7 +133,7 @@ export class Memory {
 
     }
 
-    setMemory(cpu){
+    setMemory(cpu) {
         this.cpu = cpu;
     }
 
@@ -162,6 +162,7 @@ export class Memory {
         /** 0xE000-0xFDFF
          * ECHO RAM SO IGNORE IT
         */
+        this.echoRam = new MemoryBlock(7680);
 
         /** 0xFE00-0xFE9F */
         this.oam = new MemoryBlock(160);
@@ -169,6 +170,7 @@ export class Memory {
         /** 0xFEA0-0xFEFF
          * NOT USABLE SO IGNORE IT
         */
+        this.prohibited = new MemoryBlock(96)
 
         /** 0xFF00-0xFF7F */
         this.io = new MemoryBlock(128);
@@ -252,12 +254,13 @@ export class Memory {
             else if (location < 0xE000)
                 return this.wram.getData(location - 0xC000);
             else if (location < 0xFE00)
-                // return this.ram.getData(location - 0x9F00);
-                throw new Error("Invalid Location: ECHO RAM");
+                return this.echoRam.getData(location - 0xE000);
+            // throw new Error("Invalid Location: ECHO RAM");
             else if (location < 0xFEA0)
                 return this.oam.getData(location - 0xFE00);
             else if (location < 0xFF00)
-                throw new Error("Invalid Location: PROHIBITED");
+                return this.prohibited.getData(location - 0xFEA0);
+            // throw new Error("Invalid Location: PROHIBITED");
             else if (location < 0xFF80)
                 return this.io.getData(location - 0xFF00);
             else if (location < 0xFFFF)

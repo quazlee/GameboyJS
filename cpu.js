@@ -867,15 +867,6 @@ export class Cpu {
                                 this.registers.clearFlag(6);
                                 this.tickClock(16);
                                 break;
-                                // let addend = twosComplement(this.fetch());
-                                // let value = this.registers.sumDouble(this.stackPointer, addend);
-                                // this.registers.setRegisterDouble(registerID.H, registerID.L, value >> 8, value & 0xFF);
-                                // this.registers.clearFlag(7);
-                                // this.registers.clearFlag(6);
-                                // this.registers.assignHalfcarryAdd(this.stackPointer & 0xFF, addend);
-                                // this.registers.assignCarry(this.stackPointer & 0xFF, addend);
-                                // this.tickClock(12);
-                                // break;
                             }
 
                         case 0x9:
