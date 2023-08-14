@@ -31,16 +31,29 @@ export class Gameboy {
 
     mainLoop() {
         while(this.cpu.frameReady == false){
-            this.debug.logger(); 
+            // this.debug.logger(); 
             this.cpu.interrupt();
             this.currentOpcode = this.cpu.decode();
             this.cpu.execute(this.currentOpcode);
         }
         this.numLoops++;
-        if(this.numLoops == 150){
-            this.debug.download("Log", this.debug.logString);
-            // this.debug.download("serial", this.debug.blarggString);
-        }
+        // if(this.numLoops == 100){
+        //     this.debug.download("Log", this.debug.logString);
+        //     this.debug.logString = "";
+        //     // this.debug.download("serial", this.debug.blarggString);
+        // }
+        // if(this.numLoops == 200){
+        //     this.debug.download("Log2", this.debug.logString);
+        //     this.debug.logString = "";
+        // }
+        // if(this.numLoops == 300){
+        //     this.debug.download("Log3", this.debug.logString);
+        //     this.debug.logString = "";
+        // }
+        // if(this.numLoops == 400){
+        //     this.debug.download("Log4", this.debug.logString);
+        //     this.debug.logString = "";
+        // }
         this.cpu.frameReady = false;
 
         // this.gpu.drawTileMaps();

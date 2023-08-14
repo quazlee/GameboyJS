@@ -146,8 +146,8 @@ export class RegisterCollection {
         this.data[registerID.A] = this.sum(this.data[registerID.A], carry);
         this.assignZero(this.data[registerID.A]);
         this.clearFlag(6);
-        this.assignHalfcarryAdd(oldValue, this.sum(targetValue, carry));
-        this.assignCarry(oldValue, this.sum(targetValue, carry));
+        this.assignHalfcarryAdc(oldValue, targetValue, carry);
+        this.assignCarryAdc(oldValue, targetValue, carry);
     }
 
     subA(targetValue) {
@@ -166,8 +166,8 @@ export class RegisterCollection {
         this.data[registerID.A] = this.difference(this.data[registerID.A], this.getFlag(4));
         this.assignZero(this.data[registerID.A]);
         this.setFlag(6);
-        this.assignHalfcarrySub(oldValue, this.difference(targetValue, carry));
-        this.assignCarrySub(oldValue, this.difference(targetValue, carry));
+        this.assignHalfcarrySbc(oldValue, targetValue, carry);
+        this.assignCarrySbc(oldValue, targetValue, carry);
     }
 
     andA(targetValue) {
@@ -261,7 +261,7 @@ export class RegisterCollection {
             this.setFlag(4);
         else
             this.clearFlag(4);
-        this.data[registerID.A] = (this.data[registerID.A] >> 1 | (carry << 7));
+        this.data[registerID.A] = ((this.data[registerID.A] >> 1 | (carry << 7)) & 0xFF);
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
@@ -269,18 +269,18 @@ export class RegisterCollection {
 
     rotateLeftA() {
         let carry = this.getFlag(4);
-        if (this.data[registerID.A] & 1)
+        if (this.data[registerID.A] & 0x80)
             this.setFlag(4);
         else
             this.clearFlag(4);
-        this.data[registerID.A] = (this.data[registerID.A] << 1 | (carry));
+        this.data[registerID.A] = ((this.data[registerID.A] << 1 | (carry)) & 0xFF);
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
     }
 
     rotateRightCircularA() {
-        this.data[registerID.A] = ((this.data[registerID.A] >> 1) | (this.data[registerID.A] << 7));
+        this.data[registerID.A] = (((this.data[registerID.A] >> 1) | (this.data[registerID.A] << 7)) & 0xFF);
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
@@ -288,11 +288,11 @@ export class RegisterCollection {
     }
 
     rotateLeftCircularA() {
-        this.data[registerID.A] = ((this.data[registerID.A] << 1) | (this.data[registerID.A] >> 7));
+        this.data[registerID.A] = (((this.data[registerID.A] << 1) | (this.data[registerID.A] >> 7)) & 0xFF);
         this.clearFlag(7);
         this.clearFlag(6);
         this.clearFlag(5);
-        this.assignCarryShiftRight(this.data[registerID.A]);
+        this.assignCarryShiftLeft(this.data[registerID.A]);
     }
 
     rotateRight(register) {
@@ -302,7 +302,7 @@ export class RegisterCollection {
             this.setFlag(4);
         else
             this.clearFlag(4);
-        registerValue = (registerValue >> 1 | (carry << 7));
+        registerValue = ((registerValue >> 1 | (carry << 7)) & 0xFF);
         this.data[register] = registerValue;
         this.assignZero(registerValue);
         this.clearFlag(6);
@@ -312,11 +312,11 @@ export class RegisterCollection {
     rotateLeft(register) {
         let registerValue = this.data[register];
         let carry = this.getFlag(4);
-        if (registerValue & 1)
+        if (registerValue & 0x80)
             this.setFlag(4);
         else
             this.clearFlag(4);
-        this.registerValue = (this.registerValue << 1 | (carry));
+        registerValue = ((registerValue << 1 | (carry)) & 0xFF);
         this.data[register] = registerValue;
         this.assignZero(registerValue);
         this.clearFlag(6);
@@ -325,41 +325,41 @@ export class RegisterCollection {
 
     rotateRightCircular(register) {
         let registerValue = this.data[register];
-        registerValue = ((registerValue >> 1) | (registerValue << 7));
+        registerValue = (((registerValue >> 1) | (registerValue << 7)) & 0xFF);
         this.data[register] = registerValue;
-        this.clearFlag(7);
+        this.assignZero(registerValue);
         this.clearFlag(6);
         this.clearFlag(5);
-        assignCarryShiftRight(registerValue);
+        this.assignCarryShiftRight(registerValue);
     }
 
     rotateLeftCircular(register) {
         let registerValue = this.data[register];
-        registerValue = ((registerValue << 1) | (registerValue >> 7));
+        registerValue = (((registerValue << 1) | (registerValue >> 7)) & 0xFF);
         this.data[register] = registerValue;
-        this.clearFlag(7);
+        this.assignZero(registerValue);
         this.clearFlag(6);
         this.clearFlag(5);
-        assignCarryShiftRight(registerValue);
+        this.assignCarryShiftLeft(registerValue);
     }
     SLA(register) {
         let registerValue = this.getRegister(register);
-        if (registerValue & 0x80 == 0x80){
+        if (registerValue & 0x80){
             this.setFlag(4);
         }
         else{
             this.clearFlag(4);
         }
         registerValue = (registerValue << 1) & 0xFF;
+        this.data[register] = registerValue;
         this.assignZero(registerValue);
         this.clearFlag(6);
         this.clearFlag(5);
-        this.setRegister(register, registerValue);
     }
 
     SRA(register) {
         let registerValue = this.data[register];
-        if (registerValue & 0x01 == 0x01){
+        if (registerValue & 0x01){
             this.setFlag(4);
         }
         else{
@@ -367,9 +367,11 @@ export class RegisterCollection {
         }
         let bitSeven = (registerValue & 0x80);
         registerValue = registerValue >> 1;
-        if(bitSeven = 0x80){
-            registerValue | bitSeven;
-        }
+        registerValue |= bitSeven;
+        this.data[register] = registerValue;
+        this.assignZero(registerValue);
+        this.clearFlag(6);
+        this.clearFlag(5);
     }
 
     SRL(register) {
@@ -433,6 +435,21 @@ export class RegisterCollection {
             this.clearFlag(5);
     }
 
+    assignHalfcarryAdc(value1, value2, value3) {
+        let flag = 0;
+        if((((value1 & 0xf) + (value2 & 0xf)) & 0x10) == 0x10){
+            flag |= 1;
+        }
+        let temp = this.sum(value1, value2);
+        if((((temp & 0xf) + (value3 & 0xf)) & 0x10) == 0x10){
+            flag |= 1;
+        }
+        if (flag)
+            this.setFlag(5);
+        else
+            this.clearFlag(5);
+    }
+
     assignHalfcarrySub(value1, value2) {
         if ((((value1 & 0xf) - (value2 & 0xf)) & 0x10) == 0x10)
             this.setFlag(5);
@@ -441,6 +458,21 @@ export class RegisterCollection {
     }
     assignHalfcarrySubDouble(value1, value2) {
         if ((((value1 & 0xfff) - (value2 & 0xfff)) & 0x1000) == 0x1000)
+            this.setFlag(5);
+        else
+            this.clearFlag(5);
+    }
+
+    assignHalfcarrySbc(value1, value2, value3) {
+        let flag = 0;
+        if((((value1 & 0xf) - (value2 & 0xf)) & 0x10) == 0x10){
+            flag |= 1;
+        }
+        let temp = this.difference(value1, value2);
+        if((((temp & 0xf) - (value3 & 0xf)) & 0x10) == 0x10){
+            flag |= 1;
+        }
+        if (flag)
             this.setFlag(5);
         else
             this.clearFlag(5);
@@ -460,8 +492,38 @@ export class RegisterCollection {
             this.clearFlag(4);
     }
 
+    assignCarryAdc(value1, value2, value3) {
+        let flag = 0;
+        if((value1 + value2) > 255){
+            flag |= 1;
+        }
+        let temp = (value1 + value2);
+        if((temp + value3) > 255){
+            flag |= 1;
+        }
+        if (flag)
+            this.setFlag(4);
+        else
+            this.clearFlag(4);
+    }
+
     assignCarrySub(value1, value2) {
         if ((value1 - value2) < 0)
+            this.setFlag(4);
+        else
+            this.clearFlag(4);
+    }
+
+    assignCarrySbc(value1, value2, value3) {
+        let flag = 0;
+        if((value1 - value2) < 0){
+            flag |= 1;
+        }
+        let temp = (value1 - value2);
+        if((temp - value3) < 0){
+            flag |= 1;
+        }
+        if (flag)
             this.setFlag(4);
         else
             this.clearFlag(4);

@@ -307,12 +307,14 @@ export class Memory {
                 this.wram.setData(location - 0xC000, value);
             }
             else if (location < 0xFE00)
-                throw new Error("Invalid Location: ECHO RAM");
+                return this.echoRam.setData(location - 0xE000, value);
+            // throw new Error("Invalid Location: ECHO RAM");
             else if (location < 0xFEA0) {
                 this.oam.setData(location - 0xFE00);
             }
             else if (location < 0xFF00)
-                throw new Error("Invalid Location: PROHIBITED");
+                return this.prohibited.setData(location - 0xFEA0, value);
+            // throw new Error("Invalid Location: PROHIBITED");
             else if (location < 0xFF80) {
                 if (location == 0xFF04) {
                     this.io.setData(location - 0xFF00, 0);
