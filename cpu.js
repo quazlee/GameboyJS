@@ -383,13 +383,102 @@ export class Cpu {
                                 break;
                             }
                         case 0x7://TODO DAA
-                            try {
-                                throw new Error("TODO");
+                            // try {
+                            //     throw new Error("TODO");
+                            // }
+                            // catch (e) {
+                            //     errorHandler(e);
+                            // }
+                            {
+                                let carry = this.registers.getFlag(4);
+                                let halfcarry = this.registers.getFlag(5);
+                                let negative = this.registers.getFlag(6);
+                                let high = this.registers.getRegister(registerID.A) >> 4;
+                                let low = this.registers.getRegister(registerID.A) & 0xF;
+
+                                let amountToAdd = 0;
+                                this.registers.clearFlag(4);
+                                if (!negative) {
+                                    if (low > 0x9 || halfcarry) {
+                                        amountToAdd = this.registers.sum(amountToAdd, 0x06);
+                                    }
+                                    if (high > 0x9 || carry) {
+                                        amountToAdd = this.registers.sum(amountToAdd, 0x60);
+                                        this.registers.setFlag(4);
+                                    }
+                                }
+                                else {
+                                    if (halfcarry) {
+                                        amountToAdd = this.registers.sum(amountToAdd, 0xFA);
+                                    }
+                                    if (carry) {
+                                        amountToAdd = this.registers.sum(amountToAdd, 0xA0);
+                                        this.registers.setFlag(4);
+                                    }
+                                }
+                                this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), amountToAdd));
+
+                                this.registers.clearFlag(5);
+                                this.registers.assignZero(this.registers.getRegister(registerID.A));
+                                // if (!negative) {
+                                //     if ((high < 0xA) && (low < 0xA) && (carry == 0) && (halfcarry == 0)) {
+                                //         this.registers.clearFlag(4);
+                                //     }
+                                //     else if ((high < 0x9) && (low > 0x9) && (carry == 0) && (halfcarry == 0)) {
+                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x6));
+                                //         this.registers.clearFlag(4);
+                                //     }
+                                //     else if ((high < 0xA) && (low < 0x4) && (carry == 0) && (halfcarry == 1)) {
+                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x6));
+                                //         this.registers.clearFlag(4);
+                                //     }
+                                //     else if ((high > 0x9) && (low < 0xA) && (carry == 0) && (halfcarry == 0)) {
+                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x60));
+                                //         this.registers.setFlag(4);
+                                //     }
+                                //     else if ((high > 0x8) && (low > 0x9) && (carry == 0) && (halfcarry == 0)) {
+                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x66));
+                                //         this.registers.setFlag(4);
+                                //     }
+                                //     else if ((high > 0x9) && (low < 0x4) && (carry == 0) && (halfcarry == 1)) {
+                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x66));
+                                //         this.registers.setFlag(4);
+                                //     }
+                                //     else if ((high < 0x3) && (low < 0xA) && (carry == 1) && (halfcarry == 0)) {
+                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x60));
+                                //         this.registers.setFlag(4);
+                                //     }
+                                //     else if ((high < 0x3) && (low > 0x9) && (carry == 1) && (halfcarry == 0)) {
+                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x66));
+                                //         this.registers.setFlag(4);
+                                //     }
+                                //     else if ((high < 0x4) && (low < 0x4) && (carry == 1) && (halfcarry == 1)) {
+                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x66));
+                                //         this.registers.setFlag(4);
+                                //     }
+                                // }
+                                // else {
+                                //     if ((high < 0xA) && (low < 0xA) && (carry == 0) && (halfcarry == 0)) {
+                                //         this.registers.clearFlag(4);
+                                //     }
+                                //     else if ((high < 0x9) && (low > 0x5) && (carry == 0) && (halfcarry == 1)) {
+                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0xFA));
+                                //         this.registers.clearFlag(4);
+                                //     }
+                                //     else if ((high > 0x6) && (low < 0xA) && (carry == 1) && (halfcarry == 0)) {
+                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0xA0));
+                                //         this.registers.setFlag(4);
+                                //     }
+                                //     else if ((high > 0x5) && (low > 0x5) && (carry == 1) && (halfcarry == 1)) {
+                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x9A));
+                                //         this.registers.setFlag(4);
+                                //     }
+                                //     this.registers.clearFlag(5);
+                                //     this.registers.assignZero(this.registers.getRegister(registerID.A);)
+                                // }
+                                break;
                             }
-                            catch (e) {
-                                errorHandler(e);
-                            }
-                            break;
+
                         case 0x8:
                             this.jumpRelativeConditional(this.registers.getFlag(7));
                             break;
@@ -1339,7 +1428,7 @@ export class Cpu {
                 TIMA++;
                 if (TIMA > 0xFF) {//if TIMA overflows past 0xFF, request TIMA Interrupt and reset value to TIMA Modulo (0xFF07)
                     this.memory.io.setData(0x5, this.memory.io.getData(0x6));
-                    this.memory.io.setData(0xF, this.memory.io.getData(0xF) |= 1 << 2);
+                    this.memory.io.setData(0xF, this.memory.io.getData(0xF) | 1 << 2);
                 }
             }
             this.memory.io.setData(0x5, TIMA);
@@ -1461,6 +1550,7 @@ export class Cpu {
     res(bit, register) {
         let registerValue = this.registers.getRegister(register);
         registerValue &= ~(1 << bit);
+        this.registers.setRegister(register, registerValue);
         if (register == 0x6) {
             this.tickClock(16);
         }
@@ -1471,6 +1561,7 @@ export class Cpu {
     set(bit, register) {
         let registerValue = this.registers.getRegister(register);
         registerValue |= (1 << bit);
+        this.registers.setRegister(register, registerValue);
         if (register == 0x6) {
             this.tickClock(16);
         }
