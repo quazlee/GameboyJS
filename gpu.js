@@ -254,17 +254,17 @@ export class Gpu {
             }
         }
 
-        this.backgroundTwoCtx.clearRect(0, 0, this.backgroundTwo.width, this.backgroundTwo.height);
-        for (let y = 0; y < 32; y++) {
-            for (let x = 0; x < 32; x++) {
-                let tileNumber = this.memory.readMemory(this.backgroundTwoBase + (x) + (y * 32));
-                let tileSet = [];
-                for (let i = 0; i < 16; i++) {
-                    tileSet.push(this.memory.readMemory(0x8000 + (twosComplement(tileNumber) * 16) + i));
-                }
-                let decodedTile = this.decodeTile(tileSet);
-                this.drawTile(decodedTile, x * 8, y * 8, this.backgroundTwoCtx);
-            }
-        }
+        // this.backgroundTwoCtx.clearRect(0, 0, this.backgroundTwo.width, this.backgroundTwo.height);
+        // for (let y = 0; y < 32; y++) {
+        //     for (let x = 0; x < 32; x++) {
+        //         let tileNumber = this.memory.readMemory(this.backgroundTwoBase + (x) + (y * 32));
+        //         let tileSet = [];
+        //         for (let i = 0; i < 16; i++) {
+        //             tileSet.push(this.memory.readMemory(0x8000 + (twosComplement(tileNumber) * 16) + i));
+        //         }
+        //         let decodedTile = this.decodeTile(tileSet);
+        //         this.drawTile(decodedTile, x * 8, y * 8, this.backgroundTwoCtx);
+        //     }
+        // }
     }
 }

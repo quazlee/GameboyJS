@@ -63,8 +63,12 @@ export class RegisterCollection {
     */
     setRegister(register, value) {
         try {
+            
             if (value > 255 || value < 0) {
                 throw new Error("Value Must Be Between 0x00 and 0xFF");
+            }
+            else if(value === undefined){
+                throw new Error("UNDEFINED VALUE")
             }
             else {
                 this.data[register] = value;

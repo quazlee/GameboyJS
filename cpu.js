@@ -27,6 +27,7 @@ export class Cpu {
         this.frameReady = false;
         this.debug = null;
         this.sysClock = 0xAB00;
+        this.halt = false;
     }
 
     setMemory(memory) {
@@ -81,7 +82,7 @@ export class Cpu {
                 this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
                 this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
                 this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xf));
+                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
                 this.programCounter = 0x40;
                 this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 0));
                 this.tickClock(20);
@@ -90,7 +91,7 @@ export class Cpu {
                 this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
                 this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
                 this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xf));
+                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
                 this.programCounter = 0x48;
                 this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 1));
                 this.tickClock(20);
@@ -99,7 +100,7 @@ export class Cpu {
                 this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
                 this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
                 this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xf));
+                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
                 this.programCounter = 0x50;
                 this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 2));
                 this.tickClock(20);
@@ -108,7 +109,7 @@ export class Cpu {
                 this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
                 this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
                 this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xf));
+                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
                 this.programCounter = 0x58;
                 this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 3));
                 this.tickClock(20);
@@ -117,7 +118,7 @@ export class Cpu {
                 this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
                 this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
                 this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xf));
+                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
                 this.programCounter = 0x60;
                 this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 4));
                 this.tickClock(20);
@@ -393,30 +394,37 @@ export class Cpu {
                                 let carry = this.registers.getFlag(4);
                                 let halfcarry = this.registers.getFlag(5);
                                 let negative = this.registers.getFlag(6);
-                                let high = this.registers.getRegister(registerID.A) >> 4;
-                                let low = this.registers.getRegister(registerID.A) & 0xF;
 
-                                let amountToAdd = 0;
+
+
+                                let currentValue = this.registers.getRegister(registerID.A);
                                 this.registers.clearFlag(4);
                                 if (!negative) {
+
+                                    let low = currentValue & 0xF;
+
                                     if (low > 0x9 || halfcarry) {
-                                        amountToAdd = this.registers.sum(amountToAdd, 0x06);
+                                        currentValue += 0x06;
                                     }
+
+                                    let high = currentValue >> 4;
+
                                     if (high > 0x9 || carry) {
-                                        amountToAdd = this.registers.sum(amountToAdd, 0x60);
+                                        currentValue = this.registers.sum(currentValue, 0x60);
                                         this.registers.setFlag(4);
                                     }
                                 }
                                 else {
-                                    if (halfcarry) {
-                                        amountToAdd = this.registers.sum(amountToAdd, 0xFA);
-                                    }
                                     if (carry) {
-                                        amountToAdd = this.registers.sum(amountToAdd, 0xA0);
+                                        currentValue = this.registers.difference(currentValue, 0x60);
                                         this.registers.setFlag(4);
                                     }
+
+                                    if (halfcarry) {
+                                        currentValue = this.registers.difference(currentValue, 0x06);
+                                    }
                                 }
-                                this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), amountToAdd));
+                                this.registers.setRegister(registerID.A, currentValue);
 
                                 this.registers.clearFlag(5);
                                 this.registers.assignZero(this.registers.getRegister(registerID.A));
@@ -897,11 +905,16 @@ export class Cpu {
                             this.returnConditional(this.registers.getFlag(4));
                             break;
                         case 0x9:
-                            this.programCounter = this.memory.readMemory(this.stackPointer);
-                            this.stackPointer = this.registers.sumDouble(this.stackPointer, 2);
-                            this.memory.writeMemory(0xFFFF, 1);
-                            this.tickClock(16);
-                            break;
+                            {
+                                let low = this.memory.readMemory(this.stackPointer);
+                                this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
+                                let high = this.memory.readMemory(this.stackPointer);
+                                this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
+                                this.programCounter = (high << 8) | low;
+                                this.memory.writeMemory(0xFFFF, 1);
+                                this.tickClock(16);
+                                break;
+                            }
                         case 0xA:
                             this.jumpConditional(this.registers.getFlag(4));
                             break;
@@ -1401,37 +1414,46 @@ export class Cpu {
 
             //DIV Timer
             this.sysClock = this.registers.sumDouble(this.sysClock, 1);
-            this.memory.io.setData(0x4, this.sysClock >> 8);
+            let upperSysClock = this.sysClock >> 8;
+            if (this.memory.io.getData(0x4) != upperSysClock) {
+                this.memory.io.setData(0x4, upperSysClock);
 
-            //TIMA Timer
-            let bit = 0;
-            switch (this.memory.io.getData(0x7) & 0x3) { //determines the bit to check against in DIV
-                case 1:
-                    bit = 9;
-                    break;
-                case 2:
-                    bit = 3;
-                    break;
-                case 3:
-                    bit = 5;
-                    break;
-                case 4:
-                    bit = 7;
-                    break;
-            }
-            let timerEnable = (this.memory.io.getData(0x7) & 0x4) >> 2;
-            let andResultPrevious = ((this.registers.differenceDouble(this.sysClock, 1) >> bit) & 1) & timerEnable;
-            let andResult = ((this.sysClock >> bit) & 1) & timerEnable;
-            let TIMA = 0;
-            if (andResultPrevious == 1 && andResult == 0) {
-                TIMA = this.memory.io.getData(0x5);
-                TIMA++;
-                if (TIMA > 0xFF) {//if TIMA overflows past 0xFF, request TIMA Interrupt and reset value to TIMA Modulo (0xFF07)
-                    this.memory.io.setData(0x5, this.memory.io.getData(0x6));
-                    this.memory.io.setData(0xF, this.memory.io.getData(0xF) | 1 << 2);
+                //TIMA Timer
+                let bit = 0;
+                switch (this.memory.io.getData(0x7) & 0x3) { //determines the bit to check against in DIV
+                    case 0:
+                        bit = 9;
+                        break;
+                    case 1:
+                        bit = 3;
+                        break;
+                    case 2:
+                        bit = 5;
+                        break;
+                    case 3:
+                        bit = 7;
+                        break;
                 }
+                let timerEnable = (this.memory.io.getData(0x7) & 0x4) >> 2;
+                let andResultPrevious = ((this.registers.differenceDouble(this.sysClock, 1) >> bit) & 1) & timerEnable;
+                let andResult = ((this.sysClock >> bit) & 1) & timerEnable;
+                let TIMA = 0;
+                if (andResultPrevious == 1 && andResult == 0) {
+                    TIMA = this.memory.io.getData(0x5);
+                    TIMA++;
+                    if (TIMA > 0xFF) {//if TIMA overflows past 0xFF, request TIMA Interrupt and reset value to TIMA Modulo (0xFF07)
+                        this.memory.io.setData(0x5, this.memory.io.getData(0x6));
+                        this.memory.io.setData(0xF, this.memory.io.getData(0xF) | 1 << 2);
+                    }
+                    else {
+                        this.memory.io.setData(0x5, TIMA);
+                    }
+                }
+
             }
-            this.memory.io.setData(0x5, TIMA);
+
+
+
         }
     }
 
