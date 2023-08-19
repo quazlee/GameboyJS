@@ -268,6 +268,7 @@ export class Memory {
             else if (location == 0xFFFF)
                 return this.ie.getData(0);
             else
+                return 0;
                 throw new Error("Invalid Location: OUT OF BOUNDS")
         }
         catch (e) {

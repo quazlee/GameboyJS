@@ -11,9 +11,10 @@ const registerID = {
 }
 
 export class Debug {
-    constructor(cpu, memory) {
-        this.memory = memory;
-        this.cpu = cpu;
+    constructor() {
+        this.memory = null;
+        this.cpu = null;
+        this.gpu = null
         this.breakpoint = false;
 
         // Enable Debug Tools
@@ -30,7 +31,6 @@ export class Debug {
 
         this.cpuClock = document.getElementById("clock");
 
-
         this.breakpointSubmit = document.getElementById("breakpoint-input-submit");
         this.breakpointSubmit.addEventListener("click", this.addBreakpoint.bind(this));
         this.breakPoints = [];
@@ -41,6 +41,19 @@ export class Debug {
         this.logString = "";
         this.blarggString = "";
 
+        this.toggleLogging = document.getElementById("toggle-logging");
+    }
+
+    setMemory(memory) {
+        this.memory = memory;
+    }
+
+    setCpu(cpu) {
+        this.cpu = cpu;
+    }
+
+    setGpu(gpu) {
+        this.gpu = gpu;
     }
 
     viewDebugChange() {
@@ -231,55 +244,120 @@ export class Debug {
         this.breakpointTable.getElementsByClassName("breakpoint-entry");
     }
 
-    logger(){
-        let format2 = function (input) {
-            let number = input.toString(16);
-            let digits = 2 - number.length;
-            for (let i = 0; i < digits; i++) {
-                number = "0".concat(number);
+    logger() {
+        if (this.toggleLogging.value) {
+            let format2 = function (input) {
+                let number = input.toString(16);
+                let digits = 2 - number.length;
+                for (let i = 0; i < digits; i++) {
+                    number = "0".concat(number);
+                }
+                return number.toUpperCase();
             }
-            return number.toUpperCase();
-        }
 
-        let format4 = function (input) {
-            let number = input.toString(16);
-            let digits = 4 - number.length;
-            for (let i = 0; i < digits; i++) {
-                number = "0".concat(number);
+            let format4 = function (input) {
+                let number = input.toString(16);
+                let digits = 4 - number.length;
+                for (let i = 0; i < digits; i++) {
+                    number = "0".concat(number);
+                }
+                return number.toUpperCase();
             }
-            return number.toUpperCase();
-        }
 
-        this.logString += 
-        "A: " + format2(this.cpu.registers.getRegister(registerID.A)) + 
-        " F: " + format2(this.cpu.registers.getRegister(registerID.F)) + 
-        " B: " + format2(this.cpu.registers.getRegister(registerID.B)) + 
-        " C: " + format2(this.cpu.registers.getRegister(registerID.C)) + 
-        " D: " + format2(this.cpu.registers.getRegister(registerID.D)) + 
-        " E: " + format2(this.cpu.registers.getRegister(registerID.E)) + 
-        " H: " + format2(this.cpu.registers.getRegister(registerID.H)) + 
-        " L: " + format2(this.cpu.registers.getRegister(registerID.L)) + 
-        " SP: " + format4(this.cpu.stackPointer) + 
-        " PC: 00:" + format4(this.cpu.programCounter) + " (" + 
-        format2(this.memory.readMemory(this.cpu.programCounter)) + " " +
-        format2(this.memory.readMemory(this.cpu.programCounter + 1)) + " " +
-        format2(this.memory.readMemory(this.cpu.programCounter + 2)) + " " +
-        format2(this.memory.readMemory(this.cpu.programCounter + 3)) + ")" + 
-        "\r\n";
+            this.logString +=
+                "A: " + format2(this.cpu.registers.getRegister(registerID.A)) +
+                " F: " + format2(this.cpu.registers.getRegister(registerID.F)) +
+                " B: " + format2(this.cpu.registers.getRegister(registerID.B)) +
+                " C: " + format2(this.cpu.registers.getRegister(registerID.C)) +
+                " D: " + format2(this.cpu.registers.getRegister(registerID.D)) +
+                " E: " + format2(this.cpu.registers.getRegister(registerID.E)) +
+                " H: " + format2(this.cpu.registers.getRegister(registerID.H)) +
+                " L: " + format2(this.cpu.registers.getRegister(registerID.L)) +
+                " SP: " + format4(this.cpu.stackPointer) +
+                " PC: 00:" + format4(this.cpu.programCounter) + " (" +
+                format2(this.memory.readMemory(this.cpu.programCounter)) + " " +
+                format2(this.memory.readMemory(this.cpu.programCounter + 1)) + " " +
+                format2(this.memory.readMemory(this.cpu.programCounter + 2)) + " " +
+                format2(this.memory.readMemory(this.cpu.programCounter + 3)) + ")" +
+                "\r\n";
+        }
     }
 
-    download(filename, text) {
-        var element = document.createElement('a');
-        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-        element.setAttribute('download', filename);
-      
-        element.style.display = 'none';
-        document.body.appendChild(element);
-      
-        element.click();
-      
-        document.body.removeChild(element);
-      }
+    downloadLog() {
+        if (this.toggleLogging.value) {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', "Log");
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+        }
+    }
+
+    /**
+   * Used to draw tile maps for the debug tools.
+   */
+    drawTileMaps() {
+        this.tileMapOneCtx.clearRect(0, 0, this.tileMapOne.width, this.tileMapOne.height);
+        for (let y = 0; y < 11; y++) {
+            for (let x = 0; x < 12; x++) {
+                let base = 0x8000 + (x * 16) + (y * 192);
+                let tileSet = [];
+                for (let i = 0; i < 16; i++) {
+                    tileSet.push(this.memory.readMemory(base + i));
+                }
+                let decodedTile = this.decodeTile(tileSet);
+                this.drawTile(decodedTile, x * 8, y * 8, this.tileMapOneCtx);
+            }
+        }
+        this.tileMapTwoCtx.clearRect(0, 0, this.tileMapTwo.width, this.tileMapTwo.height);
+        for (let y = 0; y < 11; y++) {
+            for (let x = 0; x < 12; x++) {
+                let base = 0x8800 + (x * 16) + (y * 192);
+                let tileSet = [];
+                for (let i = 0; i < 16; i++) {
+                    tileSet.push(this.memory.readMemory(base + i));
+                }
+                let decodedTile = this.decodeTile(tileSet);
+                this.drawTile(decodedTile, x * 8, y * 8, this.tileMapTwoCtx);
+            }
+        }
+    }
+
+    /**
+     * Used to draw background and window maps for the debug tools.
+     */
+    drawBackgroundMaps() {
+        this.backgroundOneCtx.clearRect(0, 0, this.backgroundOne.width, this.backgroundOne.height);
+        for (let y = 0; y < 32; y++) {
+            for (let x = 0; x < 32; x++) {
+                let tileNumber = this.memory.readMemory(this.backgroundOneBase + (x) + (y * 32));
+                let tileSet = [];
+                for (let i = 0; i < 16; i++) {
+                    tileSet.push(this.memory.readMemory(0x8000 + (tileNumber * 16) + i));
+                }
+                let decodedTile = this.decodeTile(tileSet);
+                this.drawTile(decodedTile, x * 8, y * 8, this.backgroundOneCtx);
+            }
+        }
+
+        // this.backgroundTwoCtx.clearRect(0, 0, this.backgroundTwo.width, this.backgroundTwo.height);
+        // for (let y = 0; y < 32; y++) {
+        //     for (let x = 0; x < 32; x++) {
+        //         let tileNumber = this.memory.readMemory(this.backgroundTwoBase + (x) + (y * 32));
+        //         let tileSet = [];
+        //         for (let i = 0; i < 16; i++) {
+        //             tileSet.push(this.memory.readMemory(0x8000 + (twosComplement(tileNumber) * 16) + i));
+        //         }
+        //         let decodedTile = this.decodeTile(tileSet);
+        //         this.drawTile(decodedTile, x * 8, y * 8, this.backgroundTwoCtx);
+        //     }
+        // }
+    }
 }
 
 // Memory Watch

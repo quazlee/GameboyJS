@@ -4,8 +4,9 @@ import { Memory } from "./memory.js";
 export class Gpu {
     constructor() {
         this.memory = null;
-        this.canvas = document.getElementById("gameboyCanvas");
-        this.ctx = this.canvas.getContext("2d");
+
+        this.viewport = document.getElementById("gameboyCanvas");
+        this.viewportCtx = this.viewport.getContext("2d");
         this.screenWidth = 160;
         this.screenHeight = 144;
         this.colorPalette = ["rgba(255, 255, 255, 1)",
@@ -126,8 +127,10 @@ export class Gpu {
             if (this.backgroundFetchStep == 1) {
                 let scy = this.memory.io.getData(0x42);
                 let scx = this.memory.io.getData(0x43);
+
                 let wy = this.memory.io.getData(0x4A);
                 let wx = this.memory.io.getData(0x4B);
+
                 let lcdc = this.memory.io.getData(0x40);
                 let windowEnable = (lcdc & 0x20) >> 4;
 
@@ -138,6 +141,7 @@ export class Gpu {
                 else {
                     backgroundMapBase = 0x9800;
                 }
+
                 let windowMapBase = 0;
                 if ((lcdc & 0x40) >> 6) {
                     windowMapBase = 0x9C00;
@@ -147,17 +151,19 @@ export class Gpu {
                 }
 
 
-                if (windowEnable && (scx + this.xPos) > wx && (scy + this.yPos) > wy) {
 
-                }
-                else {
 
-                }
+                // if (windowEnable && (scx + this.xPos) > wx && (scy + this.yPos) > wy) {
+
+                // }
+                // else {
+
+                // }
                 // let currentMap = ;
                 // let tileNumber = a;
             }
             else if (this.backgroundFetchStep == 2) {
-
+                
             }
             else if (this.backgroundFetchStep == 3) {
 
@@ -207,64 +213,5 @@ export class Gpu {
         this.oamLocation += 4;
     }
 
-    /**
-     * Used to draw tile maps for the debug tools.
-     */
-    drawTileMaps() {
-        this.tileMapOneCtx.clearRect(0, 0, this.tileMapOne.width, this.tileMapOne.height);
-        for (let y = 0; y < 11; y++) {
-            for (let x = 0; x < 12; x++) {
-                let base = 0x8000 + (x * 16) + (y * 192);
-                let tileSet = [];
-                for (let i = 0; i < 16; i++) {
-                    tileSet.push(this.memory.readMemory(base + i));
-                }
-                let decodedTile = this.decodeTile(tileSet);
-                this.drawTile(decodedTile, x * 8, y * 8, this.tileMapOneCtx);
-            }
-        }
-        this.tileMapTwoCtx.clearRect(0, 0, this.tileMapTwo.width, this.tileMapTwo.height);
-        for (let y = 0; y < 11; y++) {
-            for (let x = 0; x < 12; x++) {
-                let base = 0x8800 + (x * 16) + (y * 192);
-                let tileSet = [];
-                for (let i = 0; i < 16; i++) {
-                    tileSet.push(this.memory.readMemory(base + i));
-                }
-                let decodedTile = this.decodeTile(tileSet);
-                this.drawTile(decodedTile, x * 8, y * 8, this.tileMapTwoCtx);
-            }
-        }
-    }
 
-    /**
-     * Used to draw background and window maps for the debug tools.
-     */
-    drawBackgroundMaps() {
-        this.backgroundOneCtx.clearRect(0, 0, this.backgroundOne.width, this.backgroundOne.height);
-        for (let y = 0; y < 32; y++) {
-            for (let x = 0; x < 32; x++) {
-                let tileNumber = this.memory.readMemory(this.backgroundOneBase + (x) + (y * 32));
-                let tileSet = [];
-                for (let i = 0; i < 16; i++) {
-                    tileSet.push(this.memory.readMemory(0x8000 + (tileNumber * 16) + i));
-                }
-                let decodedTile = this.decodeTile(tileSet);
-                this.drawTile(decodedTile, x * 8, y * 8, this.backgroundOneCtx);
-            }
-        }
-
-        // this.backgroundTwoCtx.clearRect(0, 0, this.backgroundTwo.width, this.backgroundTwo.height);
-        // for (let y = 0; y < 32; y++) {
-        //     for (let x = 0; x < 32; x++) {
-        //         let tileNumber = this.memory.readMemory(this.backgroundTwoBase + (x) + (y * 32));
-        //         let tileSet = [];
-        //         for (let i = 0; i < 16; i++) {
-        //             tileSet.push(this.memory.readMemory(0x8000 + (twosComplement(tileNumber) * 16) + i));
-        //         }
-        //         let decodedTile = this.decodeTile(tileSet);
-        //         this.drawTile(decodedTile, x * 8, y * 8, this.backgroundTwoCtx);
-        //     }
-        // }
-    }
 }

@@ -709,12 +709,26 @@ export class Cpu {
                     break;
                 case 0x7:
                     if (low == 0x6) {
-                        //TODO: HALT
-                        try {
-                            throw new Error("TODO");
+                        //This is the Halt Bug. Causes the next instruction to repeat.
+                        if(!this.memory.readMemory(0xFFFF) && this.memory.readMemory(0xFF0F)){
+                            this.tickClock(4);
+                            let nextPC = this.programCounter;
+
+                            this.currentOpcode = this.cpu.decode();
+                            this.cpu.execute(this.currentOpcode);
+
+                            this.programCounter = nextPC;
                         }
-                        catch (e) {
-                            errorHandler(e);
+                        else{
+                            this.halt = true;
+                        }
+
+                        //This is true Halt Behavior. 
+                        while(this.halt){
+                            if(this.memory.readMemory(0xFF0F)){
+                                this.halt = false;
+                            }
+                            this.tickClock(4);
                         }
                     }
                     else if (low == 0xE) {

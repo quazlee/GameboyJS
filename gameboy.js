@@ -8,7 +8,7 @@ export class Gameboy {
         this.memory = new Memory();
         this.cpu = new Cpu();
         this.gpu = new Gpu();
-        this.debug = new Debug(this.cpu, this.memory);
+        this.debug = new Debug();
         this.currentOpcode = null;
         this.lastLoopEnd = 0;
         this.numLoops = 0;
@@ -21,10 +21,16 @@ export class Gameboy {
     initialize(romInput){
         this.memory.setMemory(this.cpu);
         this.memory.initialize(romInput)
+
         this.cpu.setMemory(this.memory);
         this.cpu.setDebug(this.debug);
         this.cpu.setGpu(this.gpu);
+
         this.gpu.setMemory(this.memory);
+
+        this.debug.setMemory(this.memory);
+        this.debug.setCpu(this.cpu);
+        this.debug.setGpu(this.gpu);
         
         this.testTile();
     }
@@ -32,31 +38,21 @@ export class Gameboy {
     mainLoop() {
         while(this.cpu.frameReady == false){
             this.cpu.interrupt();
+
             this.debug.logger(); 
+
             this.currentOpcode = this.cpu.decode();
             this.cpu.execute(this.currentOpcode);
         }
         this.numLoops++;
         if(this.numLoops == 35){
-            this.debug.download("Log", this.debug.logString);
+            this.debug.download();
             this.debug.logString = "";
             // this.debug.download("serial", this.debug.blarggString);
         }
-        // if(this.numLoops == 200){
-        //     this.debug.download("Log2", this.debug.logString);
-        //     this.debug.logString = "";
-        // }
-        // if(this.numLoops == 300){
-        //     this.debug.download("Log3", this.debug.logString);
-        //     this.debug.logString = "";
-        // }
-        // if(this.numLoops == 400){
-        //     this.debug.download("Log4", this.debug.logString);
-        //     this.debug.logString = "";
-        // }
         this.cpu.frameReady = false;
 
-        // this.gpu.drawTileMaps();
+        this.gpu.drawTileMaps();
         this.gpu.drawBackgroundMaps();
         // document.getElementById("log").value = this.debug.logString;
         document.getElementById("frames-elapsed").stepUp(1);
@@ -73,6 +69,6 @@ export class Gameboy {
     testTile(){
         let tile = [0x3c, 0x7e, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x7e, 0x5e, 0x7e, 0x0a, 0x7c, 0x56, 0x38, 0x7c]
         let decodedTile = this.gpu.decodeTile(tile)
-        this.gpu.drawTile(decodedTile, 0, 0, this.gpu.ctx);
+        this.gpu.drawTile(decodedTile, 0, 0, this.gpu.viewportCtx);
     }
 }
