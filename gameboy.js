@@ -36,7 +36,7 @@ export class Gameboy {
     }
 
     mainLoop() {
-        while(this.cpu.frameReady == false){
+        while(this.gpu.frameReady == false){
             this.cpu.interrupt();
 
             this.debug.logger(); 
@@ -46,14 +46,14 @@ export class Gameboy {
         }
         this.numLoops++;
         if(this.numLoops == 35){
-            this.debug.download();
+            this.debug.downloadLog();
             this.debug.logString = "";
             // this.debug.download("serial", this.debug.blarggString);
         }
-        this.cpu.frameReady = false;
+        this.gpu.frameReady = false;
 
-        this.gpu.drawTileMaps();
-        this.gpu.drawBackgroundMaps();
+        this.debug.drawTileMaps();
+        this.debug.drawBackgroundMaps();
         // document.getElementById("log").value = this.debug.logString;
         document.getElementById("frames-elapsed").stepUp(1);
 

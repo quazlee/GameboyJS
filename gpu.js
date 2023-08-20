@@ -5,6 +5,8 @@ export class Gpu {
     constructor() {
         this.memory = null;
 
+        this.frameReady = false;
+
         this.viewport = document.getElementById("gameboyCanvas");
         this.viewportCtx = this.viewport.getContext("2d");
         this.screenWidth = 160;
@@ -31,7 +33,13 @@ export class Gpu {
         this.oamLocation = 0xFE00;
         this.oamBuffer = [];
 
-        this.xPos = 0;
+        this.fetcherXPos = 0; //0-31 tilewise
+        this.fetcherYPos = 0; //0-255 pixelwise
+
+        this.tileNumber = 0;
+        this.fetchAddress = 0;
+        this.fetchLow = 0;
+        this.fetchHigh = 0;
 
         this.backgroundFetchStep = 1;
         this.backgroundFetchBuffer = [];
@@ -79,12 +87,44 @@ export class Gpu {
         return generatedTile;
     }
 
+    decodeTile2(tileHigh, tileLow) {
+        let generatedTile = Array(8);
+
+        for (let i = 0; i < 8; i++) {
+            let low = (tileHigh & (1 << 7 - i)) >> (7 - i);
+            let high = (tileLow & (1 << 7 - i)) >> (7 - i);
+            generatedTile[i] = (high << 1) | low;
+        }
+        return generatedTile;
+    }
+
+    /**
+     * Draws an 8*8 tile to the canvas
+     * @param {*} tile 
+     * @param {*} xOffset 
+     * @param {*} yOffset 
+     * @param {*} ctx 
+     */
     drawTile(tile, xOffset, yOffset, ctx) {
         for (let y = 0; y < 8; y++) {
             for (let x = 0; x < 8; x++) {
                 let color = tile[y][x];
                 this.drawToCanvas(x + xOffset, y + yOffset, this.colorPalette[color], ctx);
             }
+        }
+    }
+
+    /**
+     * Draws an 8*1 tile to the canvas
+     * @param {*} tile 
+     * @param {*} xOffset 
+     * @param {*} yOffset 
+     * @param {*} ctx 
+     */
+    drawTile2(tile, xOffset, yOffset, ctx) {
+        for (let i = 0; i < 8; i++) {
+            let color = tile[i];
+            this.drawToCanvas(i + xOffset, yOffset, this.colorPalette[color], ctx);
         }
     }
 
@@ -106,7 +146,7 @@ export class Gpu {
      * @returns sprite height
      */
     getSpriteHeight() {
-        let spriteSize = ((this.memory.io.getData(0x44) & 0x4) >> 2);
+        let spriteSize = ((this.memory.io.getData(0x40) & 0x4) >> 2);
         if (spriteSize) {
             return 16;
         }
@@ -120,6 +160,7 @@ export class Gpu {
             this.oamScan();
             this.scanLineTicks += 2;
             if (this.scanLineTicks == 80) {
+                this.fetcherXPos = 0;
                 this.mode = 3;
             }
         }
@@ -134,42 +175,53 @@ export class Gpu {
                 let lcdc = this.memory.io.getData(0x40);
                 let windowEnable = (lcdc & 0x20) >> 4;
 
-                let backgroundMapBase = 0;
-                if ((lcdc & 0x8) >> 3) {
-                    backgroundMapBase = 0x9C00;
-                }
-                else {
-                    backgroundMapBase = 0x9800;
+                let tileMapBase = 0x9800;
+                if ((((lcdc & 0x8) >> 3) && (scx + this.fetcherXPos) < wx) ||
+                    (((lcdc & 0x40) >> 6) && (scx + this.fetcherXPos) > wx)) {
+                    tileMapBase = 0x9C00;
                 }
 
-                let windowMapBase = 0;
-                if ((lcdc & 0x40) >> 6) {
-                    windowMapBase = 0x9C00;
+                let x = ((scx / 8) + this.fetcherXPos) & 0x1F;
+                let y = (scy + (this.memory.io.getData(0x44))) & 0xFF;
+
+                this.tileNumber = this.memory.readMemory(tileMapBase + (x) + (y * 32));
+
+                let base = 0x8800;
+                if (((lcdc & 0x4) >> 2)) {
+                    base = 0x8000;
                 }
-                else {
-                    windowMapBase = 0x9800;
+                let address = base + (16 * this.tileNumber);;
+                if (base == 0x8000) {
+                    this.fetchAddress = address + (2 * ((this.scanLine + (this.memory.io.getData(0x44))) & 0xFF) % 8);
+
                 }
+                else{
+                    this.fetchAddress = address + twosComplement((2 * ((this.scanLine + (this.memory.io.getData(0x44))) & 0xFF) % 8));
+                }
+                this.backgroundFetchStep = 2;
 
-
-
-
-                // if (windowEnable && (scx + this.xPos) > wx && (scy + this.yPos) > wy) {
-
-                // }
-                // else {
-
-                // }
-                // let currentMap = ;
-                // let tileNumber = a;
             }
             else if (this.backgroundFetchStep == 2) {
-                
+                this.fetchLow = this.memory.readMemory(this.fetchAddress);
+                this.backgroundFetchStep = 3;
             }
             else if (this.backgroundFetchStep == 3) {
-
+                this.fetchHigh = this.memory.readMemory(this.fetchAddress + 1);
+                this.backgroundFetchStep = 4;
             }
             else if (this.backgroundFetchStep == 4) {
-
+                this.backgroundFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
+                if(){
+                }
+                this.fetcherXPos += 1;
+                if(this.fetcherXPos == 32){
+                    this.fetcherXPos = 0;
+                    this.mode = 0;
+                }
+                this.backgroundFetchStep = 1;
+            }
+            if(this.backgroundFetchBuffer.length > 0 && this.fetcherXPos * 8 < 160){
+                this.drawTile2(this.backgroundFetchBuffer, this.fetcherXPos * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
             }
             this.scanLineTicks += 2;
         }
@@ -195,7 +247,8 @@ export class Gpu {
             else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 153) {
                 this.scanLineTicks = 0;
                 this.mode = 2;
-                this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
+                this.memory.io.setData(0x44, 0);
+                this.frameReady = true;
             }
         }
     }

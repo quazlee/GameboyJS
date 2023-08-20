@@ -19,12 +19,10 @@ const registerID = {
 export class Cpu {
     constructor() {
         this.registers = new RegisterCollection();
-        this.opcodeTicks = 0;
         this.memory = null;
         this.programCounter = 0x0100;
         this.stackPointer = 0xFFFE;
         this.gpu = null;
-        this.frameReady = false;
         this.debug = null;
         this.sysClock = 0xAB00;
         this.halt = false;
@@ -1419,12 +1417,9 @@ export class Cpu {
 
     tickClock(cycles) {
         for (let i = 0; i < cycles; i++) {
-            if (this.opcodeTicks == 70224) {
-                this.opcodeTicks = 0;
-                this.frameReady = true;
+            if(i % 2 == 1){
+                this.gpu.cycle();
             }
-            this.gpu.cycle();
-            this.opcodeTicks++;
 
             //DIV Timer
             this.sysClock = this.registers.sumDouble(this.sysClock, 1);
