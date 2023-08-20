@@ -381,13 +381,7 @@ export class Cpu {
                                 this.tickClock(8);
                                 break;
                             }
-                        case 0x7://TODO DAA
-                            // try {
-                            //     throw new Error("TODO");
-                            // }
-                            // catch (e) {
-                            //     errorHandler(e);
-                            // }
+                        case 0x7:
                             {
                                 let carry = this.registers.getFlag(4);
                                 let halfcarry = this.registers.getFlag(5);
@@ -934,7 +928,7 @@ export class Cpu {
                             this.callConditional(this.registers.getFlag(4));
                             break;
                         case 0xE:
-                            this.registers.sbcA(this.fetch);
+                            this.registers.sbcA(this.fetch());
                             this.tickClock(8);
                             break;
                         case 0xF:
@@ -1452,7 +1446,7 @@ export class Cpu {
                     TIMA++;
                     if (TIMA > 0xFF) {//if TIMA overflows past 0xFF, request TIMA Interrupt and reset value to TIMA Modulo (0xFF07)
                         this.memory.io.setData(0x5, this.memory.io.getData(0x6));
-                        this.memory.io.setData(0xF, this.memory.io.getData(0xF) | 1 << 2);
+                        this.memory.io.setData(0xF, this.memory.io.getData(0xF) | (1 << 2)); //Request Interrupt
                     }
                     else {
                         this.memory.io.setData(0x5, TIMA);

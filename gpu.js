@@ -1,4 +1,5 @@
 import { twosComplement } from "./utility.js";
+import { errorHandler } from "./errorhandler.js";
 import { Memory } from "./memory.js";
 
 export class Gpu {
@@ -35,6 +36,8 @@ export class Gpu {
 
         this.fetcherXPos = 0; //0-31 tilewise
         this.fetcherYPos = 0; //0-255 pixelwise
+
+        this.renderX = 0;
 
         this.tileNumber = 0;
         this.fetchAddress = 0;
@@ -122,10 +125,20 @@ export class Gpu {
      * @param {*} ctx 
      */
     drawTile2(tile, xOffset, yOffset, ctx) {
-        for (let i = 0; i < 8; i++) {
-            let color = tile[i];
-            this.drawToCanvas(i + xOffset, yOffset, this.colorPalette[color], ctx);
+        let color = 0;
+        try{
+            color = tile[0];
+            if(color === undefined){
+                throw new Error("WHY?????");
+            } 
         }
+        catch{
+            errorHandler(e);
+        }
+        
+        this.drawToCanvas(((8 - tile.length) + xOffset), yOffset, this.colorPalette[color], ctx);
+        tile.shift();
+        return tile;
     }
 
     /**
@@ -175,28 +188,29 @@ export class Gpu {
                 let lcdc = this.memory.io.getData(0x40);
                 let windowEnable = (lcdc & 0x20) >> 4;
 
+                let ly = this.memory.io.getData(0x44);
+
                 let tileMapBase = 0x9800;
                 if ((((lcdc & 0x8) >> 3) && (scx + this.fetcherXPos) < wx) ||
                     (((lcdc & 0x40) >> 6) && (scx + this.fetcherXPos) > wx)) {
                     tileMapBase = 0x9C00;
                 }
 
-                let x = ((scx / 8) + this.fetcherXPos) & 0x1F;
-                let y = (scy + (this.memory.io.getData(0x44))) & 0xFF;
+                let tileMapXOffset = ((scx / 8) + this.renderX) & 0x1F;
+                let tileMapYOffset = ((scy + ly) & 0xFF);                
 
-                this.tileNumber = this.memory.readMemory(tileMapBase + (x) + (y * 32));
+                this.tileNumber = this.memory.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
 
                 let base = 0x8800;
-                if (((lcdc & 0x4) >> 2)) {
+                if (((lcdc & 0x16) >> 4)) {
                     base = 0x8000;
                 }
                 let address = base + (16 * this.tileNumber);;
                 if (base == 0x8000) {
-                    this.fetchAddress = address + (2 * ((this.scanLine + (this.memory.io.getData(0x44))) & 0xFF) % 8);
-
+                    this.fetchAddress = address + (2 * (tileMapYOffset % 8));
                 }
-                else{
-                    this.fetchAddress = address + twosComplement((2 * ((this.scanLine + (this.memory.io.getData(0x44))) & 0xFF) % 8));
+                else {
+                    this.fetchAddress = address + twosComplement((2 * ((scy + (this.memory.io.getData(0x44))) & 0xFF) % 8));
                 }
                 this.backgroundFetchStep = 2;
 
@@ -210,19 +224,23 @@ export class Gpu {
                 this.backgroundFetchStep = 4;
             }
             else if (this.backgroundFetchStep == 4) {
-                this.backgroundFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
-                if(){
+                if (this.renderX < 20 && this.backgroundFetchBuffer.length == 0) {
+                    this.backgroundFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
+                    this.backgroundFetchStep = 1;
                 }
-                this.fetcherXPos += 1;
-                if(this.fetcherXPos == 32){
-                    this.fetcherXPos = 0;
+                else if (this.renderX == 20 && this.backgroundFetchBuffer.length == 0) {
+                    this.renderX = 0;
                     this.mode = 0;
                 }
-                this.backgroundFetchStep = 1;
             }
-            if(this.backgroundFetchBuffer.length > 0 && this.fetcherXPos * 8 < 160){
-                this.drawTile2(this.backgroundFetchBuffer, this.fetcherXPos * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+            if (this.backgroundFetchBuffer.length > 0 && this.renderX * 8 < 160) {
+                this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+                this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+                if (this.backgroundFetchBuffer.length == 0) {
+                    this.renderX += 1;
+                }
             }
+
             this.scanLineTicks += 2;
         }
         else if (this.mode == 0) {
@@ -236,9 +254,11 @@ export class Gpu {
                 this.mode = 1;
                 this.scanLineTicks = 0;
                 this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
+                // this.memory.io.setData(0xF, this.memory.io.getData(0xF) | 1); //Request Interrupt
             }
         }
         else if (this.mode == 1) {
+
             this.scanLineTicks += 2;
             if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) < 153) {
                 this.scanLineTicks = 0;

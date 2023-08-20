@@ -45,15 +45,15 @@ export class Gameboy {
             this.cpu.execute(this.currentOpcode);
         }
         this.numLoops++;
-        if(this.numLoops == 35){
+        if(this.numLoops == 50){
             this.debug.downloadLog();
             this.debug.logString = "";
             // this.debug.download("serial", this.debug.blarggString);
         }
         this.gpu.frameReady = false;
 
-        this.debug.drawTileMaps();
-        this.debug.drawBackgroundMaps();
+        // this.debug.drawTileMaps();
+        // this.debug.drawBackgroundMaps();
         // document.getElementById("log").value = this.debug.logString;
         document.getElementById("frames-elapsed").stepUp(1);
 

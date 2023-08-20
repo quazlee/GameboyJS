@@ -311,7 +311,7 @@ export class Memory {
                 return this.echoRam.setData(location - 0xE000, value);
             // throw new Error("Invalid Location: ECHO RAM");
             else if (location < 0xFEA0) {
-                this.oam.setData(location - 0xFE00);
+                this.oam.setData(location - 0xFE00, value);
             }
             else if (location < 0xFF00)
                 return this.prohibited.setData(location - 0xFEA0, value);

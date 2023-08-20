@@ -1,3 +1,4 @@
+import { twosComplement } from "./utility.js";
 const registerID = {
     B: 0,
     C: 1,
@@ -345,18 +346,18 @@ export class Debug {
             }
         }
 
-        // this.backgroundTwoCtx.clearRect(0, 0, this.backgroundTwo.width, this.backgroundTwo.height);
-        // for (let y = 0; y < 32; y++) {
-        //     for (let x = 0; x < 32; x++) {
-        //         let tileNumber = this.memory.readMemory(this.backgroundTwoBase + (x) + (y * 32));
-        //         let tileSet = [];
-        //         for (let i = 0; i < 16; i++) {
-        //             tileSet.push(this.memory.readMemory(0x8800 + (twosComplement(tileNumber) * 16) + i));
-        //         }
-        //         let decodedTile = this.decodeTile(tileSet);
-        //         this.drawTile(decodedTile, x * 8, y * 8, this.backgroundTwoCtx);
-        //     }
-        // }
+        this.gpu.backgroundTwoCtx.clearRect(0, 0, this.gpu.backgroundTwo.width, this.gpu.backgroundTwo.height);
+        for (let y = 0; y < 32; y++) {
+            for (let x = 0; x < 32; x++) {
+                let tileNumber = this.memory.readMemory(this.gpu.backgroundTwoBase + (x) + (y * 32));
+                let tileSet = [];
+                for (let i = 0; i < 16; i++) {
+                    tileSet.push(this.memory.readMemory(0x8800 + (twosComplement(tileNumber) * 16) + i));
+                }
+                let decodedTile = this.gpu.decodeTile(tileSet);
+                this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.backgroundTwoCtx);
+            }
+        }
     }
 }
 
