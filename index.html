@@ -41,18 +41,6 @@
                     </div>
                     <div id="dropdown-options">
                         <div class="dropdown-option">
-                            <input type="checkbox" name="one" id="one" />
-                            <label for="one">Step Controls</label>
-                        </div>
-                        <div class="dropdown-option">
-                            <input type="checkbox" name="two" id="two" />
-                            <label for="two">Memory Watch</label>
-                        </div>
-                        <div class="dropdown-option">
-                            <input type="checkbox" name="three" id="three" />
-                            <label for="three">Breakpoint</label>
-                        </div>
-                        <div class="dropdown-option">
                             <input type="checkbox" name="toggle-logging" id="toggle-logging" />
                             <label for="toggle-logging">Logging</label>
                         </div>
@@ -113,41 +101,9 @@
                 </div>
             </div>
 
-            <textarea class="debug-tool" id="blargg">
-            </textarea>
-            <div class="debug-tool" id="program-counter"></div>
-            <div class="debug-tool" id="current-opcode"></div>
-            <div class="debug-tool" id="clock"></div>
-
             <input class="debug-tool" type="number" id="frames-elapsed" autocomplete="off"></input>
 
             <div class="debug-tool" id="fps"></div>
-
-            <div class="debug-tool">
-                <div id="register-viewer">
-                    <div id="registers">
-                        <div class="register" id="register-BC"></div>
-                        <div class="register" id="register-DE"></div>
-                        <div class="register" id="register-HL"></div>
-                        <div class="register" id="register-AF"></div>
-                    </div>
-                    <div id="flags">
-                        <div class="flag" id="flag-z"></div>
-                        <div class="flag" id="flag-n"></div>
-                        <div class="flag" id="flag-h"></div>
-                        <div class="flag" id="flag-c"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="debug-tool" id="memory-viewer">
-                <input type="text" name="memory-viewer-input" id="memory-viewer-input">
-                <label for="memory-viewer-input">Memory Location</label>
-                <button id="memory-viewer-submit">Submit</button>
-            </div>
-
-            <textarea class="debug-tool" id="log">
-            </textarea>
             
             <div class="canvas-container">
                 <canvas class="debug-tool" id="tile-map-one" width="96" height="88"></canvas>
