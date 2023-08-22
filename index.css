@@ -56,7 +56,10 @@ canvas {
     background-color: rgba(172, 172, 172, 1);
 }
 
-
+.canvas-container {
+    display: flex;
+    flex-direction:row;
+}
 
 #register-viewer{
     display: flex;
