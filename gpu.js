@@ -254,7 +254,7 @@ export class Gpu {
                 this.mode = 1;
                 this.scanLineTicks = 0;
                 this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
-                // this.memory.io.setData(0xF, this.memory.io.getData(0xF) | 1); //Request Interrupt
+                this.memory.io.setData(0xF, this.memory.io.getData(0xF) | 1); //TODO: Request Interrupt
             }
         }
         else if (this.mode == 1) {
