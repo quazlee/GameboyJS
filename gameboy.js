@@ -52,8 +52,8 @@ export class Gameboy {
         }
         this.gpu.frameReady = false;
 
-        // this.debug.drawTileMaps();
-        // this.debug.drawBackgroundMaps();
+        this.debug.drawTileMaps();
+        this.debug.drawBackgroundMaps();
         // document.getElementById("log").value = this.debug.logString;
         document.getElementById("frames-elapsed").stepUp(1);
 
