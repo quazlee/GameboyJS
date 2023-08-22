@@ -43,6 +43,8 @@ export class Debug {
         this.blarggString = "";
 
         this.toggleLogging = document.getElementById("toggle-logging");
+        this.toggleBackgroundMaps = document.getElementById("toggle-background-maps");
+        this.toggleTileMaps = document.getElementById("toggle-tile-maps");
     }
 
     setMemory(memory) {
@@ -303,28 +305,30 @@ export class Debug {
    * Used to draw tile maps for the debug tools.
    */
     drawTileMaps() {
-        this.gpu.tileMapOneCtx.clearRect(0, 0, this.gpu.tileMapOne.width, this.gpu.tileMapOne.height);
-        for (let y = 0; y < 11; y++) {
-            for (let x = 0; x < 12; x++) {
-                let base = 0x8000 + (x * 16) + (y * 192);
-                let tileSet = [];
-                for (let i = 0; i < 16; i++) {
-                    tileSet.push(this.memory.readMemory(base + i));
+        if (this.toggleTileMaps.checked) {
+            this.gpu.tileMapOneCtx.clearRect(0, 0, this.gpu.tileMapOne.width, this.gpu.tileMapOne.height);
+            for (let y = 0; y < 11; y++) {
+                for (let x = 0; x < 12; x++) {
+                    let base = 0x8000 + (x * 16) + (y * 192);
+                    let tileSet = [];
+                    for (let i = 0; i < 16; i++) {
+                        tileSet.push(this.memory.readMemory(base + i));
+                    }
+                    let decodedTile = this.gpu.decodeTile(tileSet);
+                    this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.tileMapOneCtx);
                 }
-                let decodedTile = this.gpu.decodeTile(tileSet);
-                this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.tileMapOneCtx);
             }
-        }
-        this.gpu.tileMapTwoCtx.clearRect(0, 0, this.gpu.tileMapTwo.width, this.gpu.tileMapTwo.height);
-        for (let y = 0; y < 11; y++) {
-            for (let x = 0; x < 12; x++) {
-                let base = 0x8800 + (x * 16) + (y * 192);
-                let tileSet = [];
-                for (let i = 0; i < 16; i++) {
-                    tileSet.push(this.memory.readMemory(base + i));
+            this.gpu.tileMapTwoCtx.clearRect(0, 0, this.gpu.tileMapTwo.width, this.gpu.tileMapTwo.height);
+            for (let y = 0; y < 11; y++) {
+                for (let x = 0; x < 12; x++) {
+                    let base = 0x8800 + (x * 16) + (y * 192);
+                    let tileSet = [];
+                    for (let i = 0; i < 16; i++) {
+                        tileSet.push(this.memory.readMemory(base + i));
+                    }
+                    let decodedTile = this.gpu.decodeTile(tileSet);
+                    this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.tileMapTwoCtx);
                 }
-                let decodedTile = this.gpu.decodeTile(tileSet);
-                this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.tileMapTwoCtx);
             }
         }
     }
@@ -333,29 +337,31 @@ export class Debug {
      * Used to draw background and window maps for the debug tools.
      */
     drawBackgroundMaps() {
-        this.gpu.backgroundOneCtx.clearRect(0, 0, this.gpu.backgroundOne.width, this.gpu.backgroundOne.height);
-        for (let y = 0; y < 32; y++) {
-            for (let x = 0; x < 32; x++) {
-                let tileNumber = this.memory.readMemory(this.gpu.backgroundOneBase + (x) + (y * 32));
-                let tileSet = [];
-                for (let i = 0; i < 16; i++) {
-                    tileSet.push(this.memory.readMemory(0x8000 + (tileNumber * 16) + i));
+        if (this.toggleBackgroundMaps.checked) {
+            this.gpu.backgroundOneCtx.clearRect(0, 0, this.gpu.backgroundOne.width, this.gpu.backgroundOne.height);
+            for (let y = 0; y < 32; y++) {
+                for (let x = 0; x < 32; x++) {
+                    let tileNumber = this.memory.readMemory(this.gpu.backgroundOneBase + (x) + (y * 32));
+                    let tileSet = [];
+                    for (let i = 0; i < 16; i++) {
+                        tileSet.push(this.memory.readMemory(0x8000 + (tileNumber * 16) + i));
+                    }
+                    let decodedTile = this.gpu.decodeTile(tileSet);
+                    this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.backgroundOneCtx);
                 }
-                let decodedTile = this.gpu.decodeTile(tileSet);
-                this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.backgroundOneCtx);
             }
-        }
-
-        this.gpu.backgroundTwoCtx.clearRect(0, 0, this.gpu.backgroundTwo.width, this.gpu.backgroundTwo.height);
-        for (let y = 0; y < 32; y++) {
-            for (let x = 0; x < 32; x++) {
-                let tileNumber = this.memory.readMemory(this.gpu.backgroundTwoBase + (x) + (y * 32));
-                let tileSet = [];
-                for (let i = 0; i < 16; i++) {
-                    tileSet.push(this.memory.readMemory(0x8800 + (twosComplement(tileNumber) * 16) + i));
+    
+            this.gpu.backgroundTwoCtx.clearRect(0, 0, this.gpu.backgroundTwo.width, this.gpu.backgroundTwo.height);
+            for (let y = 0; y < 32; y++) {
+                for (let x = 0; x < 32; x++) {
+                    let tileNumber = this.memory.readMemory(this.gpu.backgroundTwoBase + (x) + (y * 32));
+                    let tileSet = [];
+                    for (let i = 0; i < 16; i++) {
+                        tileSet.push(this.memory.readMemory(0x8800 + (twosComplement(tileNumber) * 16) + i));
+                    }
+                    let decodedTile = this.gpu.decodeTile(tileSet);
+                    this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.backgroundTwoCtx);
                 }
-                let decodedTile = this.gpu.decodeTile(tileSet);
-                this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.backgroundTwoCtx);
             }
         }
     }
