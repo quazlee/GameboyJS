@@ -2,6 +2,7 @@ import { Cpu } from "./cpu.js";
 import { Debug } from "./debug.js";
 import { Gpu } from "./gpu.js";
 import { Memory } from "./memory.js";
+import { Controls } from "./controls.js";
 
 export class Gameboy {
     constructor() {
@@ -9,6 +10,8 @@ export class Gameboy {
         this.cpu = new Cpu();
         this.gpu = new Gpu();
         this.debug = new Debug();
+        this.controls = new Controls();
+
         this.currentOpcode = null;
         this.lastLoopEnd = 0;
         this.numLoops = 0;
@@ -48,19 +51,13 @@ export class Gameboy {
         if(this.numLoops == 50){
             this.debug.downloadLog();
             this.debug.logString = "";
-            // this.debug.download("serial", this.debug.blarggString);
         }
         this.gpu.frameReady = false;
 
         this.debug.drawTileMaps();
         this.debug.drawBackgroundMaps();
-        // document.getElementById("log").value = this.debug.logString;
         document.getElementById("frames-elapsed").stepUp(1);
-
         this.debug.debugRomOutput(this.cpu);
-        // this.debug.debugClock(this.cpu);
-        // this.debug.debugMemoryWatch(this.cpu);
-        // this.debug.registerViewer(this.cpu.registers);
     }
 
     /**
