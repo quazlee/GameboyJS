@@ -34,18 +34,22 @@ export class Gameboy {
         this.debug.setMemory(this.memory);
         this.debug.setCpu(this.cpu);
         this.debug.setGpu(this.gpu);
+
+        this.controls.setMemory(this.memory);
         
         this.testTile();
     }
 
     mainLoop() {
         while(this.gpu.frameReady == false){
+            this.controls.updateInputState();
             this.cpu.interrupt();
 
             this.debug.logger(); 
 
             this.currentOpcode = this.cpu.decode();
             this.cpu.execute(this.currentOpcode);
+            
         }
         this.numLoops++;
         if(this.numLoops == 50){

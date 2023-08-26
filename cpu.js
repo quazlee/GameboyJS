@@ -75,51 +75,31 @@ export class Cpu {
      * Checks for requested Interrupts at the start of every CPU cycle.
      */
     interrupt() {
+        function interruptJump(location, bit){
+            this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+            this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
+            this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+            this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
+            this.programCounter = location;
+            this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << bit));
+            this.tickClock(20);
+        }
+
         if (this.memory.readMemory(0xFFFF)) {
             if (this.memory.readMemory(0xFFFF) & 1 && this.memory.readMemory(0xFF0F) & 1) {
-                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
-                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
-                this.programCounter = 0x40;
-                this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 0));
-                this.tickClock(20);
+                interruptJump(0x40, 0);
             }
             if (this.memory.readMemory(0xFFFF) & 2 && this.memory.readMemory(0xFF0F) & 2) {
-                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
-                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
-                this.programCounter = 0x48;
-                this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 1));
-                this.tickClock(20);
+                interruptJump(0x48, 1);
             }
             if (this.memory.readMemory(0xFFFF) & 4 && this.memory.readMemory(0xFF0F) & 4) {
-                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
-                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
-                this.programCounter = 0x50;
-                this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 2));
-                this.tickClock(20);
+                interruptJump(0x50, 2);
             }
             if (this.memory.readMemory(0xFFFF) & 8 && this.memory.readMemory(0xFF0F) & 8) {
-                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
-                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
-                this.programCounter = 0x58;
-                this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 3));
-                this.tickClock(20);
+                interruptJump(0x58, 3);
             }
             if (this.memory.readMemory(0xFFFF) & 16 && this.memory.readMemory(0xFF0F) & 16) {
-                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
-                this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-                this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
-                this.programCounter = 0x60;
-                this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << 4));
-                this.tickClock(20);
+                interruptJump(0x60, 4);
             }
         }
     }
