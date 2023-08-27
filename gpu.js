@@ -40,6 +40,7 @@ export class Gpu {
         this.renderX = 0;
 
         this.hasWyEqualedLy = false;
+        this.renderWindow = false;
 
         this.tileNumber = 0;
         this.fetchAddress = 0;
@@ -197,10 +198,7 @@ export class Gpu {
                 }
 
                 //Determine if the current tile is a background tile or a window tile
-                let isWindowTile = false;
-                if(windowEnable && this.hasWyEqualedLy && (this.renderX - (8 - this.backgroundFetchBuffer)) >= (wx - 7)){
-
-                }                
+                      
 
                 let tileMapBase = 0x9800;
                 if ((((lcdc & 0x8) >> 3) && (scx + this.fetcherXPos) < wx) ||
@@ -248,6 +246,7 @@ export class Gpu {
             if (this.backgroundFetchBuffer.length > 0 && this.renderX * 8 < 160) {
                 this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
                 this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+                this.checkRenderWindow(windowEnable);
                 if (this.backgroundFetchBuffer.length == 0) {
                     this.renderX += 1;
                 }
@@ -281,8 +280,22 @@ export class Gpu {
                 this.memory.io.setData(0x44, 0);
                 this.frameReady = true;
                 this.hasWyEqualedLy = false;
+                this.renderWindow = false;
             }
         }
+    }
+
+    /**
+     * Checks if the window should be rendered for the rest of the current scanline
+     * @param {*} windowEnable 
+     */
+    checkRenderWindow(windowEnable){
+        if(!this.renderWindow && windowEnable && this.hasWyEqualedLy && (this.renderX - (8 - this.backgroundFetchBuffer)) >= (wx - 7)){
+            this.renderWindow = true;
+            this.backgroundFetchStep = 1;
+            this.backgroundFetchBuffer = [];
+            this.renderX -= 1;
+        }          
     }
 
     /**
