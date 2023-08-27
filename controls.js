@@ -4,14 +4,14 @@ export class Controls {
         document.addEventListener("keyup", this.keyUpHandler, false);
 
         //True = not pressed. False = pressed.
-        this.up = true;
-        this.down = true;
-        this.left = true;
-        this.right = true;
-        this.a = true;
-        this.b = true;
-        this.start = true;
-        this.select = true;
+        this.up = 1;
+        this.down = 1;
+        this.left = 1;
+        this.right = 1;
+        this.a = 1;
+        this.b = 1;
+        this.start = 1;
+        this.select = 1;
 
         this.memory = null;
     }
@@ -22,46 +22,58 @@ export class Controls {
 
     keyDownHandler(event) {
         switch (event.keyCode) {
+            case 8:
+                this.select = 0;
+                break;
+            case 13:
+                this.select = 0;
+                break;
             case 37:
-                this.left = false;
+                this.left = 0;
                 break;
             case 38:
-                this.up = false;
+                this.up = 0;
                 break;
             case 39:
-                this.right = false;
+                this.right = 0;
                 break;
             case 40:
-                this.down = false;
+                this.down = 0;
                 break;
             case 88:
-                this.b = false;
+                this.b = 0;
                 break;
             case 90:
-                this.a = false;
+                this.a = 0;
                 break;
         }
     }
 
     keyUpHandler(event) {
         switch (event.keyCode) {
+            case 8:
+                this.select = 1;
+                break;
+            case 13:
+                this.select = 1;
+                break;
             case 37:
-                this.left = true;
+                this.left = 1;
                 break;
             case 38:
-                this.up = true;
+                this.up = 1;
                 break;
             case 39:
-                this.right = true;
+                this.right = 1;
                 break;
             case 40:
-                this.down = true;
+                this.down = 1;
                 break;
             case 88:
-                this.b = true;
+                this.b = 1;
                 break;
             case 90:
-                this.a = true;
+                this.a = 1;
                 break;
         }
     }

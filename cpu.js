@@ -625,12 +625,12 @@ export class Cpu {
                 case 0x7:
                     if (low == 0x6) {
                         //This is the Halt Bug. Causes the next instruction to repeat.
-                        if(!this.memory.readMemory(0xFFFF) && this.memory.readMemory(0xFF0F)){
+                        if(this.ime == 0 && (this.memory.readMemory(0xFFFF) & this.memory.readMemory(0xFF0F)) != 0){
                             this.tickClock(4);
                             let nextPC = this.programCounter;
 
-                            this.currentOpcode = this.cpu.decode();
-                            this.cpu.execute(this.currentOpcode);
+                            this.currentOpcode = this.decode();
+                            this.execute(this.currentOpcode);
 
                             this.programCounter = nextPC;
                         }
@@ -640,7 +640,7 @@ export class Cpu {
 
                         //This is true Halt Behavior. 
                         while(this.halt){
-                            if(this.memory.readMemory(0xFF0F)){
+                            if((this.memory.readMemory(0xFFFF) & this.memory.readMemory(0xFF0F)) != 0){
                                 this.halt = false;
                             }
                             this.tickClock(4);
