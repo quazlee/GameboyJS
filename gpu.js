@@ -37,9 +37,10 @@ export class Gpu {
         this.fetcherXPos = 0; //0-31 tilewise
         this.fetcherYPos = 0; //0-255 pixelwise
 
-        this.renderX = 0;
+        this.renderX = 0; //current x tile coordinate of the renderer 
 
-        this.hasWyEqualedLy = false;
+        this.windowEnable = 0;
+        this.hasWyEqualedLy = false; //if wy == ly, true for the rest of the frame
         this.renderWindow = false;
 
         this.tileNumber = 0;
@@ -93,6 +94,12 @@ export class Gpu {
         return generatedTile;
     }
 
+    /**
+     * Generates a 8x1 tile from 2 bytes of data
+     * @param {*} tileHigh 
+     * @param {*} tileLow 
+     * @returns 
+     */
     decodeTile2(tileHigh, tileLow) {
         let generatedTile = Array(8);
 
@@ -129,16 +136,16 @@ export class Gpu {
      */
     drawTile2(tile, xOffset, yOffset, ctx) {
         let color = 0;
-        try{
+        try {
             color = tile[0];
-            if(color === undefined){
+            if (color === undefined) {
                 throw new Error("WHY?????");
-            } 
+            }
         }
-        catch{
+        catch {
             errorHandler(e);
         }
-        
+
         this.drawToCanvas(((8 - tile.length) + xOffset), yOffset, this.colorPalette[color], ctx);
         tile.shift();
         return tile;
@@ -170,132 +177,158 @@ export class Gpu {
             return 8;
         }
     }
-
+    /**
+     * General cycle that drives the ppu.
+     * One pass of each mode lasts 2 ticks.
+     */
     cycle() {
         if (this.mode == 2) {
-            this.oamScan();
-            this.scanLineTicks += 2;
-            if (this.scanLineTicks == 80) {
-                this.fetcherXPos = 0;
-                this.mode = 3;
-            }
+            this.modeTwo();
         }
         else if (this.mode == 3) {
-            if (this.backgroundFetchStep == 1) {
-                let scy = this.memory.io.getData(0x42);
-                let scx = this.memory.io.getData(0x43);
-
-                let wy = this.memory.io.getData(0x4A);
-                let wx = this.memory.io.getData(0x4B);
-
-                let lcdc = this.memory.io.getData(0x40);
-                let windowEnable = (lcdc & 0x20) >> 4;
-
-                let ly = this.memory.io.getData(0x44);
-
-                if(wy == ly){
-                    this.hasWyEqualedLy = true;
-                }
-
-                //Determine if the current tile is a background tile or a window tile
-                      
-
-                let tileMapBase = 0x9800;
-                if ((((lcdc & 0x8) >> 3) && (scx + this.fetcherXPos) < wx) ||
-                    (((lcdc & 0x40) >> 6) && (scx + this.fetcherXPos) > wx)) {
-                    tileMapBase = 0x9C00;
-                }
-
-                let tileMapXOffset = ((scx / 8) + this.renderX) & 0x1F;
-                let tileMapYOffset = ((scy + ly) & 0xFF);                
-
-                this.tileNumber = this.memory.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
-
-                let base = 0x8800;
-                if (((lcdc & 0x16) >> 4)) {
-                    base = 0x8000;
-                }
-                let address = base + (16 * this.tileNumber);;
-                if (base == 0x8000) {
-                    this.fetchAddress = address + (2 * (tileMapYOffset % 8));
-                }
-                else {
-                    this.fetchAddress = address + twosComplement((2 * ((scy + (this.memory.io.getData(0x44))) & 0xFF) % 8));
-                }
-                this.backgroundFetchStep = 2;
-
-            }
-            else if (this.backgroundFetchStep == 2) {
-                this.fetchLow = this.memory.readMemory(this.fetchAddress);
-                this.backgroundFetchStep = 3;
-            }
-            else if (this.backgroundFetchStep == 3) {
-                this.fetchHigh = this.memory.readMemory(this.fetchAddress + 1);
-                this.backgroundFetchStep = 4;
-            }
-            else if (this.backgroundFetchStep == 4) {
-                if (this.renderX < 20 && this.backgroundFetchBuffer.length == 0) {
-                    this.backgroundFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
-                    this.backgroundFetchStep = 1;
-                }
-                else if (this.renderX == 20 && this.backgroundFetchBuffer.length == 0) {
-                    this.renderX = 0;
-                    this.mode = 0;
-                }
-            }
-            if (this.backgroundFetchBuffer.length > 0 && this.renderX * 8 < 160) {
-                this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
-                this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
-                this.checkRenderWindow(windowEnable);
-                if (this.backgroundFetchBuffer.length == 0) {
-                    this.renderX += 1;
-                }
-            }
-
-            this.scanLineTicks += 2;
+            this.modeThree();
         }
         else if (this.mode == 0) {
-            this.scanLineTicks += 2;
-            if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) < 143) {
-                this.mode = 2;
-                this.scanLineTicks = 0;
-                this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
-            }
-            else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 143) {
-                this.mode = 1;
-                this.scanLineTicks = 0;
-                this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
-                this.memory.io.setData(0xF, this.memory.io.getData(0xF) | 1); 
-            }
+            this.modeZero();
         }
         else if (this.mode == 1) {
-            this.scanLineTicks += 2;
-            if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) < 153) {
-                this.scanLineTicks = 0;
-                this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
-            }
-            else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 153) {
-                this.scanLineTicks = 0;
-                this.mode = 2;
-                this.memory.io.setData(0x44, 0);
-                this.frameReady = true;
-                this.hasWyEqualedLy = false;
-                this.renderWindow = false;
-            }
+            this.modeOne();
         }
     }
 
     /**
-     * Checks if the window should be rendered for the rest of the current scanline
-     * @param {*} windowEnable 
+     * This mode is the VBlank period.
+     * It lasts from scanlines 144-153.
      */
-    checkRenderWindow(windowEnable){
-        if(!this.renderWindow && windowEnable && this.hasWyEqualedLy && (this.renderX - (8 - this.backgroundFetchBuffer)) >= (wx - 7)){
+    modeZero() {
+        this.scanLineTicks += 2;
+        if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) < 143) {
+            this.mode = 2;
+            this.scanLineTicks = 0;
+            this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
+        }
+        else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 143) {
+            this.mode = 1;
+            this.scanLineTicks = 0;
+            this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
+            this.memory.io.setData(0xF, this.memory.io.getData(0xF) | 1);
+        }
+    }
+
+    modeOne() {
+        this.scanLineTicks += 2;
+        if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) < 153) {
+            this.scanLineTicks = 0;
+            this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
+        }
+        else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 153) {
+            this.scanLineTicks = 0;
+            this.mode = 2;
+            this.memory.io.setData(0x44, 0);
+            this.frameReady = true;
+            this.hasWyEqualedLy = false;
+            this.renderWindow = false;
+        }
+    }
+
+    /**
+     * This mode is the OAM scan.
+     * It looks for up to 40 sprites.
+     */
+    modeTwo() {
+        this.oamScan();
+        this.scanLineTicks += 2;
+        if (this.scanLineTicks == 80) {
+            this.fetcherXPos = 0;
+            this.mode = 3;
+        }
+    }
+
+    /**
+     * This mode is where pixels are pushed to the screen.
+     */
+    modeThree() {
+        if (this.backgroundFetchStep == 1) {
+            let scy = this.memory.io.getData(0x42);
+            let scx = this.memory.io.getData(0x43);
+
+            let wy = this.memory.io.getData(0x4A);
+            let wx = this.memory.io.getData(0x4B);
+
+            let lcdc = this.memory.io.getData(0x40);
+            this.windowEnable = (lcdc & 0x20) >> 4;
+
+            let ly = this.memory.io.getData(0x44);
+
+            if (wy == ly) {
+                this.hasWyEqualedLy = true;
+            }
+
+            let tileMapBase = 0x9800;
+            if ((((lcdc & 0x8) >> 3) && (scx + this.fetcherXPos) < wx) ||
+                (((lcdc & 0x40) >> 6) && (scx + this.fetcherXPos) > wx)) {
+                tileMapBase = 0x9C00;
+            }
+
+            let tileMapXOffset = ((scx / 8) + this.renderX) & 0x1F;
+            let tileMapYOffset = ((scy + ly) & 0xFF);
+
+            this.tileNumber = this.memory.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
+
+            let base = 0x8800;
+            if (((lcdc & 0x16) >> 4)) {
+                base = 0x8000;
+            }
+            let address = base + (16 * this.tileNumber);;
+            if (base == 0x8000) {
+                this.fetchAddress = address + (2 * (tileMapYOffset % 8));
+            }
+            else {
+                this.fetchAddress = address + twosComplement((2 * ((scy + (this.memory.io.getData(0x44))) & 0xFF) % 8));
+            }
+            this.backgroundFetchStep = 2;
+
+        }
+        else if (this.backgroundFetchStep == 2) {
+            this.fetchLow = this.memory.readMemory(this.fetchAddress);
+            this.backgroundFetchStep = 3;
+        }
+        else if (this.backgroundFetchStep == 3) {
+            this.fetchHigh = this.memory.readMemory(this.fetchAddress + 1);
+            this.backgroundFetchStep = 4;
+        }
+        else if (this.backgroundFetchStep == 4) {
+            if (this.renderX < 20 && this.backgroundFetchBuffer.length == 0) {
+                this.backgroundFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
+                this.backgroundFetchStep = 1;
+            }
+            else if (this.renderX == 20 && this.backgroundFetchBuffer.length == 0) {
+                this.renderX = 0;
+                this.mode = 0;
+            }
+        }
+        if (this.backgroundFetchBuffer.length > 0 && this.renderX * 8 < 160) {
+            this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+            this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+            this.checkRenderWindow();
+            if (this.backgroundFetchBuffer.length == 0) {
+                this.renderX += 1;
+            }
+        }
+
+        this.scanLineTicks += 2;
+    }
+
+    /**
+     * Checks if the window should be rendered for the rest of the current scanline
+     */
+    checkRenderWindow() {
+        if (!this.renderWindow && this.windowEnable && this.hasWyEqualedLy && (this.renderX - (8 - this.backgroundFetchBuffer)) >= (wx - 7)) {
             this.renderWindow = true;
             this.backgroundFetchStep = 1;
             this.backgroundFetchBuffer = [];
             this.renderX -= 1;
-        }          
+        }
     }
 
     /**
