@@ -26,6 +26,7 @@ export class Cpu {
         this.debug = null;
         this.sysClock = 0xAB00;
         this.halt = false;
+        this.ime = 0;
     }
 
     setMemory(memory) {
@@ -75,33 +76,33 @@ export class Cpu {
      * Checks for requested Interrupts at the start of every CPU cycle.
      */
     interrupt() {
-        function interruptJump(location, bit){
-            this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-            this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
-            this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-            this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
-            this.programCounter = location;
-            this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << bit));
-            this.tickClock(20);
-        }
-
-        if (this.memory.readMemory(0xFFFF)) {
+        if (this.ime && this.memory.readMemory(0xFFFF)) {
             if (this.memory.readMemory(0xFFFF) & 1 && this.memory.readMemory(0xFF0F) & 1) {
-                interruptJump(0x40, 0);
+                this.interruptJump(0x40, 0);
             }
             if (this.memory.readMemory(0xFFFF) & 2 && this.memory.readMemory(0xFF0F) & 2) {
-                interruptJump(0x48, 1);
+                this.interruptJump(0x48, 1);
             }
             if (this.memory.readMemory(0xFFFF) & 4 && this.memory.readMemory(0xFF0F) & 4) {
-                interruptJump(0x50, 2);
+                this.interruptJump(0x50, 2);
             }
             if (this.memory.readMemory(0xFFFF) & 8 && this.memory.readMemory(0xFF0F) & 8) {
-                interruptJump(0x58, 3);
+                this.interruptJump(0x58, 3);
             }
             if (this.memory.readMemory(0xFFFF) & 16 && this.memory.readMemory(0xFF0F) & 16) {
-                interruptJump(0x60, 4);
+                this.interruptJump(0x60, 4);
             }
         }
+    }
+
+    interruptJump (location, bit){
+        this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+        this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
+        this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
+        this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
+        this.programCounter = location;
+        this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << bit));
+        this.tickClock(20);
     }
 
     /**
@@ -330,10 +331,10 @@ export class Cpu {
                             {
                                 let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
                                 this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
-                                this.registers.incRegisterDouble(registerID.H, registerID.L);
                                 let value = this.registers.getRegister(registerID.A);
                                 this.registers.setRegister(registerID.HL, value);
                                 this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                                this.registers.incRegisterDouble(registerID.H, registerID.L);
                                 this.tickClock(8);
                                 break;
                             }
@@ -400,62 +401,6 @@ export class Cpu {
 
                                 this.registers.clearFlag(5);
                                 this.registers.assignZero(this.registers.getRegister(registerID.A));
-                                // if (!negative) {
-                                //     if ((high < 0xA) && (low < 0xA) && (carry == 0) && (halfcarry == 0)) {
-                                //         this.registers.clearFlag(4);
-                                //     }
-                                //     else if ((high < 0x9) && (low > 0x9) && (carry == 0) && (halfcarry == 0)) {
-                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x6));
-                                //         this.registers.clearFlag(4);
-                                //     }
-                                //     else if ((high < 0xA) && (low < 0x4) && (carry == 0) && (halfcarry == 1)) {
-                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x6));
-                                //         this.registers.clearFlag(4);
-                                //     }
-                                //     else if ((high > 0x9) && (low < 0xA) && (carry == 0) && (halfcarry == 0)) {
-                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x60));
-                                //         this.registers.setFlag(4);
-                                //     }
-                                //     else if ((high > 0x8) && (low > 0x9) && (carry == 0) && (halfcarry == 0)) {
-                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x66));
-                                //         this.registers.setFlag(4);
-                                //     }
-                                //     else if ((high > 0x9) && (low < 0x4) && (carry == 0) && (halfcarry == 1)) {
-                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x66));
-                                //         this.registers.setFlag(4);
-                                //     }
-                                //     else if ((high < 0x3) && (low < 0xA) && (carry == 1) && (halfcarry == 0)) {
-                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x60));
-                                //         this.registers.setFlag(4);
-                                //     }
-                                //     else if ((high < 0x3) && (low > 0x9) && (carry == 1) && (halfcarry == 0)) {
-                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x66));
-                                //         this.registers.setFlag(4);
-                                //     }
-                                //     else if ((high < 0x4) && (low < 0x4) && (carry == 1) && (halfcarry == 1)) {
-                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x66));
-                                //         this.registers.setFlag(4);
-                                //     }
-                                // }
-                                // else {
-                                //     if ((high < 0xA) && (low < 0xA) && (carry == 0) && (halfcarry == 0)) {
-                                //         this.registers.clearFlag(4);
-                                //     }
-                                //     else if ((high < 0x9) && (low > 0x5) && (carry == 0) && (halfcarry == 1)) {
-                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0xFA));
-                                //         this.registers.clearFlag(4);
-                                //     }
-                                //     else if ((high > 0x6) && (low < 0xA) && (carry == 1) && (halfcarry == 0)) {
-                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0xA0));
-                                //         this.registers.setFlag(4);
-                                //     }
-                                //     else if ((high > 0x5) && (low > 0x5) && (carry == 1) && (halfcarry == 1)) {
-                                //         this.registers.setRegister(registerID.A, this.registers.sum(this.registers.getRegister(registerID.A), 0x9A));
-                                //         this.registers.setFlag(4);
-                                //     }
-                                //     this.registers.clearFlag(5);
-                                //     this.registers.assignZero(this.registers.getRegister(registerID.A);)
-                                // }
                                 break;
                             }
 
@@ -476,7 +421,6 @@ export class Cpu {
                                 this.registers.incRegisterDouble(registerID.H, registerID.L);
                                 this.registers.setRegister(registerID.A, value);
                                 this.tickClock(8);
-                                this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                                 break;
                             }
                         case 0xB:
@@ -525,10 +469,10 @@ export class Cpu {
                             {
                                 let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
                                 this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
-                                this.registers.decRegisterDouble(registerID.H, registerID.L);
                                 let value = this.registers.getRegister(registerID.A);
                                 this.registers.setRegister(registerID.HL, value);
                                 this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                                this.registers.decRegisterDouble(registerID.H, registerID.L);
                                 this.tickClock(8);
                                 break;
                             }
@@ -584,7 +528,6 @@ export class Cpu {
                                 let value = this.registers.getRegister(registerID.HL);
                                 this.registers.decRegisterDouble(registerID.H, registerID.L);
                                 this.registers.setRegister(registerID.A, value);
-                                this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                                 this.tickClock(8);
                                 break;
                             }
@@ -992,7 +935,7 @@ export class Cpu {
                             this.tickClock(8);
                             break;
                         case 0x3:
-                            this.memory.writeMemory(0xFFFF, 0);
+                            this.ime = 0;
                             break;
                         case 0x5:
                             this.push(registerID.A, registerID.F);
@@ -1039,7 +982,7 @@ export class Cpu {
                                 break;
                             }
                         case 0xB:
-                            this.memory.writeMemory(0xFFFF, 0xFF);
+                            this.ime = 1;
                             break;
                         case 0xE:
                             this.registers.cpA(this.fetch());
