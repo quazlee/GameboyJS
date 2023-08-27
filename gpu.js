@@ -39,6 +39,8 @@ export class Gpu {
 
         this.renderX = 0;
 
+        this.hasWyEqualedLy = false;
+
         this.tileNumber = 0;
         this.fetchAddress = 0;
         this.fetchLow = 0;
@@ -190,6 +192,16 @@ export class Gpu {
 
                 let ly = this.memory.io.getData(0x44);
 
+                if(wy == ly){
+                    this.hasWyEqualedLy = true;
+                }
+
+                //Determine if the current tile is a background tile or a window tile
+                let isWindowTile = false;
+                if(windowEnable && this.hasWyEqualedLy && (this.renderX - (8 - this.backgroundFetchBuffer)) >= (wx - 7)){
+
+                }                
+
                 let tileMapBase = 0x9800;
                 if ((((lcdc & 0x8) >> 3) && (scx + this.fetcherXPos) < wx) ||
                     (((lcdc & 0x40) >> 6) && (scx + this.fetcherXPos) > wx)) {
@@ -258,7 +270,6 @@ export class Gpu {
             }
         }
         else if (this.mode == 1) {
-
             this.scanLineTicks += 2;
             if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) < 153) {
                 this.scanLineTicks = 0;
@@ -269,6 +280,7 @@ export class Gpu {
                 this.mode = 2;
                 this.memory.io.setData(0x44, 0);
                 this.frameReady = true;
+                this.hasWyEqualedLy = false;
             }
         }
     }
