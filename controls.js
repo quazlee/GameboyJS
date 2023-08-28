@@ -1,7 +1,7 @@
 export class Controls {
     constructor() {
-        document.addEventListener("keydown", this.keyDownHandler, false);
-        document.addEventListener("keyup", this.keyUpHandler, false);
+        document.addEventListener("keydown", this.keyDownHandler.bind(this), false);
+        document.addEventListener("keyup", this.keyUpHandler.bind(this), false);
 
         //True = not pressed. False = pressed.
         this.up = 1;

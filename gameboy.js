@@ -49,8 +49,9 @@ export class Gameboy {
 
             this.currentOpcode = this.cpu.decode();
             this.cpu.execute(this.currentOpcode);
-            
+            this.controls.updateInputState();
         }
+        console.log(this.memory.readMemory(0xFF00).toString(2));
         this.numLoops++;
         if(this.numLoops == 50){
             this.debug.downloadLog();
