@@ -42,15 +42,15 @@ export class Gameboy {
 
     mainLoop() {
         while(this.gpu.frameReady == false){
-            this.controls.updateInputState();
             this.cpu.interrupt();
 
             this.debug.logger(); 
 
             this.currentOpcode = this.cpu.decode();
             this.cpu.execute(this.currentOpcode);
+            this.controls.updateInputState();
         }
-        this.controls.updateInputState();
+        console.log(this.memory.readMemory(0xFF00).toString(2));
         this.numLoops++;
         if(this.numLoops == 50){
             this.debug.downloadLog();

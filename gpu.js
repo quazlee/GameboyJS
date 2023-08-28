@@ -261,13 +261,13 @@ export class Gpu {
         
         this.backgroundFetchCycle();
 
-        for (let i = 0; i < 40; i++) {
-            let spriteX = this.memory.readMemory(this.oamBuffer[i] + 1);
-            let pixelX = (this.renderX - (8 - this.backgroundFetchBuffer));
-            if (spriteX <= pixelX + 8) {
+        // for (let i = 0; i < 40; i++) {
+        //     let spriteX = this.memory.readMemory(this.oamBuffer[i] + 1);
+        //     let pixelX = (this.renderX - (8 - this.backgroundFetchBuffer));
+        //     if (spriteX <= pixelX + 8) {
 
-            }
-        }
+        //     }
+        // }
 
         if (this.backgroundFetchBuffer.length > 0 && this.renderX * 8 < 160) {
             this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
