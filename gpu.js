@@ -187,6 +187,7 @@ export class Gpu {
             return 8;
         }
     }
+
     /**
      * General cycle that drives the ppu.
      * One pass of each mode lasts 2 ticks.
