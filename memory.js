@@ -311,6 +311,79 @@ export class Memory {
             else if (location < 0xFF00)
                 return this.prohibited.setData(location - 0xFEA0, value);
             else if (location < 0xFF80) {
+                if (location == 0xFF04) { //RESET TIMA
+                    this.io.setData(location - 0xFF00, 0);
+                }
+                else if (location == 0xFF46) { //OAM DMA
+                    this.io.setData(location - 0xFF00, value);
+                    let source = Math.floor((value / 0x100));
+                    for (let i = 0; i < 160; i++) {
+                        this.oam[i] = this.readMemory(source);
+                        source++;
+                        this.cpu.tickClock(1)
+                    }
+                }
+                else {
+                    this.io.setData(location - 0xFF00, value);
+                }
+            }
+            else if (location < 0xFFFF) {
+                this.hram.setData(location - 0xFF80, value);
+            }
+            else if (location == 0xFFFF) {
+                this.ie.setData(0, value);
+            }
+            else {
+                throw new Error("Invalid Location: OUT OF BOUNDS");
+            }
+        }
+        catch (e) {
+            errorHandler(e);
+        }
+    }
+
+    writeMemoryMbcOne(location, value) { //TODO
+        try {
+            if (location < 0x2000) { //Any write to here will enable RAM if the value has a lower nibble of 0xA                let low = value | 0xF;
+                let low = value | 0xF;
+                if (low == 0xA) {
+                    this.ramEnabled = true;
+                }
+                else {
+                    this.ramEnabled = false;
+                }
+            }
+            else if (location < 0x4000) { //Writing to here will change the active ROM Bank 
+                //TODO
+                this.romBank.changeBank(value - 1);
+            }
+            else if (location < 0x6000) {
+                //TODO
+                //need to figure out ram if need bank or not
+            }
+            else if (location < 0x8000) {
+                //TODO
+                //see pandocs to figure out later
+            }
+            else if (location < 0xA000) {
+                this.vram.setData(location - 0x8000, value);
+            }
+            else if (location < 0xC000) {
+                if (this.ramEnabled) {
+                    this.ram.setData(location - 0xA000, value);
+                }
+            }
+            else if (location < 0xE000) {
+                this.wram.setData(location - 0xC000, value);
+            }
+            else if (location < 0xFE00)
+                return this.echoRam.setData(location - 0xE000, value);
+            else if (location < 0xFEA0) {
+                this.oam.setData(location - 0xFE00, value);
+            }
+            else if (location < 0xFF00)
+                return this.prohibited.setData(location - 0xFEA0, value);
+            else if (location < 0xFF80) {
                 if (location == 0xFF04) {
                     this.io.setData(location - 0xFF00, 0);
                 }
@@ -342,30 +415,20 @@ export class Memory {
         }
     }
 
-    writeMemoryMbcOne(location, value) {
+    writeMemoryMbcThree(location, value) {//TODO
         try {
-            if (location < 0x2000) {
-                let low = value | 0xF;
-                if (low == 0xA) {
-                    this.ramEnabled = true;
-                }
-                else {
-                    this.ramEnabled = false;
-                }
+            if (location < 0x2000) {//TODO
             }
-            else if (location < 0x4000) {
-                this.romBank.changeBank(value - 1);
+            else if (location < 0x4000) {//TODO
             }
-            else if (location < 0x6000) {
-                //need to figure out ram if need bank or not
+            else if (location < 0x6000) {//TODO
             }
-            else if (location < 0x8000) {
-                //see pandocs to figure out later
+            else if (location < 0x8000) {//TODO
             }
             else if (location < 0xA000) {
                 this.vram.setData(location - 0x8000, value);
             }
-            else if (location < 0xC000) {
+            else if (location < 0xC000) {//TODO
                 if (this.ramEnabled) {
                     this.ram.setData(location - 0xA000, value);
                 }
