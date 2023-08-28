@@ -14,7 +14,7 @@ export class Gpu {
         this.screenHeight = 144;
         this.colorPalette = ["rgba(255, 255, 255, 1)",
             "rgba(172, 172, 172, 1)",
-            "rgba(86, 86, 86 1)",
+            "rgba(86, 86, 86, 1)",
             "rgba(0, 0, 0, 1)"];
 
         // this.colorPalette = ["rgba(255, 255, 255, 1)",

@@ -26,7 +26,7 @@ export class Controls {
                 this.select = 0;
                 break;
             case 13:
-                this.select = 0;
+                this.start = 0;
                 break;
             case 37:
                 this.left = 0;
@@ -55,7 +55,7 @@ export class Controls {
                 this.select = 1;
                 break;
             case 13:
-                this.select = 1;
+                this.start = 1;
                 break;
             case 37:
                 this.left = 1;
@@ -82,12 +82,12 @@ export class Controls {
         let selectAction = (this.memory.readMemory(0xFF00) >> 5) & 1;
         let selectDirection = (this.memory.readMemory(0xFF00) >> 4) & 1;
 
-        if (selectAction) {
+        if (!selectAction) {
             let low = (this.start << 3) | (this.select << 2) | (this.b << 1) | this.a;
             let high = this.memory.readMemory(0xFF00) >> 4;
             this.memory.writeMemory(0xFF00, (high << 4) | low);
         }
-        else if (selectDirection) {
+        else if (!selectDirection) {
             let low = (this.down << 3) | (this.up << 2) | (this.left << 1) | this.right;
             let high = this.memory.readMemory(0xFF00) >> 4;
             this.memory.writeMemory(0xFF00, (high << 4) | low);
