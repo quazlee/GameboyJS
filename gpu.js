@@ -17,6 +17,11 @@ export class Gpu {
             "rgba(86, 86, 86 1)",
             "rgba(0, 0, 0, 1)"];
 
+        // this.colorPalette = ["rgba(255, 255, 255, 1)",
+        //     "rgba(255, 0, 0, 1)",
+        //     "rgba(0, 255, 0 1)",
+        //     "rgba(0, 0, 255, 1)"];
+
         this.mode = 2;
         this.scanLine = 0;
         this.scanLineTicks = 0;
@@ -25,6 +30,8 @@ export class Gpu {
         this.tileMapOneCtx = this.tileMapOne.getContext("2d");
         this.tileMapTwo = document.getElementById("tile-map-two");
         this.tileMapTwoCtx = this.tileMapTwo.getContext("2d");
+        this.tileMapThree = document.getElementById("tile-map-three");
+        this.tileMapThreeCtx = this.tileMapThree.getContext("2d");
 
         this.backgroundOne = document.getElementById("background-one");
         this.backgroundOneCtx = this.backgroundOne.getContext("2d");
@@ -42,6 +49,9 @@ export class Gpu {
         this.windowEnable = 0;
         this.hasWyEqualedLy = false; //if wy == ly, true for the rest of the frame
         this.renderWindow = false;
+
+        this.windowXOffset = 0; //X coordinate of the current window tile
+        this.windowYOffset = 0;
 
         this.tileNumber = 0;
         this.fetchAddress = 0;
@@ -250,44 +260,54 @@ export class Gpu {
     modeThree() {
         if (this.backgroundFetchStep == 1) {
             let scy = this.memory.io.getData(0x42);
-            let scx = this.memory.io.getData(0x43);
-
-            let wy = this.memory.io.getData(0x4A);
-            let wx = this.memory.io.getData(0x4B);
+            let scx = this.memory.io.getData(0x43);          
 
             let lcdc = this.memory.io.getData(0x40);
             this.windowEnable = (lcdc & 0x20) >> 4;
 
             let ly = this.memory.io.getData(0x44);
+            let wy = this.memory.io.getData(0x4A);
 
             if (wy == ly) {
                 this.hasWyEqualedLy = true;
             }
 
             let tileMapBase = 0x9800;
-            if ((((lcdc & 0x8) >> 3) && (scx + this.fetcherXPos) < wx) ||
-                (((lcdc & 0x40) >> 6) && (scx + this.fetcherXPos) > wx)) {
-                tileMapBase = 0x9C00;
-            }
+            
 
-            let tileMapXOffset = ((scx / 8) + this.renderX) & 0x1F;
-            let tileMapYOffset = ((scy + ly) & 0xFF);
-
-            this.tileNumber = this.memory.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
-
-            let base = 0x8800;
+            //Get the base address for the region of memory to fetch tile data from. Depends on lcdc bit 4.
+            let base = 0x9000;
             if (((lcdc & 0x16) >> 4)) {
                 base = 0x8000;
             }
-            let address = base + (16 * this.tileNumber);;
-            if (base == 0x8000) {
-                this.fetchAddress = address + (2 * (tileMapYOffset % 8));
-            }
-            else {
-                this.fetchAddress = address + twosComplement((2 * ((scy + (this.memory.io.getData(0x44))) & 0xFF) % 8));
-            }
-            this.backgroundFetchStep = 2;
 
+            if (!this.renderWindow) {
+                if ((lcdc & 0x8) >> 3) {
+                    tileMapBase = 0x9C00;
+                }
+                let tileMapXOffset = ((scx / 8) + this.renderX) & 0x1F;
+                let tileMapYOffset = ((scy + ly) & 0xFF);
+              
+                if (base == 0x8000) {
+                    this.tileNumber = this.memory.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
+                    let address = base + (16 * this.tileNumber);
+                    this.fetchAddress = address + (2 * (tileMapYOffset % 8));
+                }
+                else {
+                    this.tileNumber = this.memory.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
+                    let address = base + (16 * twosComplement(this.tileNumber));
+                    this.fetchAddress = address + (2 * (tileMapYOffset % 8));
+                }
+            }
+            else if (this.renderWindow) {
+                if ((lcdc & 0x40) >> 6) {
+                    tileMapBase = 0x9C00;
+                }
+                this.tileNumber = this.memory.readMemory(tileMapBase + this.windowXOffset + (32 * this.windowYOffset));
+                this.windowXOffset++;
+            }
+
+            this.backgroundFetchStep = 2;
         }
         else if (this.backgroundFetchStep == 2) {
             this.fetchLow = this.memory.readMemory(this.fetchAddress);
@@ -305,6 +325,9 @@ export class Gpu {
             else if (this.renderX == 20 && this.backgroundFetchBuffer.length == 0) {
                 this.renderX = 0;
                 this.mode = 0;
+                if(this.renderWindow){
+                    this.windowYOffset++;
+                }
             }
         }
         if (this.backgroundFetchBuffer.length > 0 && this.renderX * 8 < 160) {
@@ -323,6 +346,7 @@ export class Gpu {
      * Checks if the window should be rendered for the rest of the current scanline
      */
     checkRenderWindow() {
+        let wx = this.memory.io.getData(0x4B);
         if (!this.renderWindow && this.windowEnable && this.hasWyEqualedLy && (this.renderX - (8 - this.backgroundFetchBuffer)) >= (wx - 7)) {
             this.renderWindow = true;
             this.backgroundFetchStep = 1;

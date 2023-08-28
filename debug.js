@@ -330,6 +330,18 @@ export class Debug {
                     this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.tileMapTwoCtx);
                 }
             }
+            this.gpu.tileMapThreeCtx.clearRect(0, 0, this.gpu.tileMapThree.width, this.gpu.tileMapThree.height);
+            for (let y = 0; y < 11; y++) {
+                for (let x = 0; x < 12; x++) {
+                    let base = 0x9000 + (x * 16) + (y * 192);
+                    let tileSet = [];
+                    for (let i = 0; i < 16; i++) {
+                        tileSet.push(this.memory.readMemory(base + i));
+                    }
+                    let decodedTile = this.gpu.decodeTile(tileSet);
+                    this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.tileMapThreeCtx);
+                }
+            }
         }
     }
 
@@ -357,7 +369,7 @@ export class Debug {
                     let tileNumber = this.memory.readMemory(this.gpu.backgroundTwoBase + (x) + (y * 32));
                     let tileSet = [];
                     for (let i = 0; i < 16; i++) {
-                        tileSet.push(this.memory.readMemory(0x8800 + (twosComplement(tileNumber) * 16) + i));
+                        tileSet.push(this.memory.readMemory(0x9000 + (twosComplement(tileNumber) * 16) + i));
                     }
                     let decodedTile = this.gpu.decodeTile(tileSet);
                     this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.backgroundTwoCtx);
