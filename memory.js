@@ -92,6 +92,7 @@ export class Memory {
     constructor(romInput) {
         this.cpu = null;
         this.romInput = null;
+        this.mbcType = null;
         this.numRomBanks = null;
         this.ramEnabled = null;
         this.bankMode = null;
@@ -139,8 +140,9 @@ export class Memory {
 
     initialize(romInput) {
         this.romInput = romInput;
-        let exponent = this.romInput[0x0148];
-        this.numRomBanks = (2 ^ exponent);
+        this.mbcType = this.romInput[0x147]
+        let exponent = this.romInput[0x148];
+        this.numRomBanks = (2 ** (exponent + 1));
         this.ramEnabled = false;
         this.bankMode = false;
 
@@ -255,12 +257,10 @@ export class Memory {
                 return this.wram.getData(location - 0xC000);
             else if (location < 0xFE00)
                 return this.echoRam.getData(location - 0xE000);
-            // throw new Error("Invalid Location: ECHO RAM");
             else if (location < 0xFEA0)
                 return this.oam.getData(location - 0xFE00);
             else if (location < 0xFF00)
                 return this.prohibited.getData(location - 0xFEA0);
-            // throw new Error("Invalid Location: PROHIBITED");
             else if (location < 0xFF80)
                 return this.io.getData(location - 0xFF00);
             else if (location < 0xFFFF)
@@ -269,7 +269,6 @@ export class Memory {
                 return this.ie.getData(0);
             else
                 return 0;
-                throw new Error("Invalid Location: OUT OF BOUNDS")
         }
         catch (e) {
             errorHandler(e);
@@ -277,6 +276,73 @@ export class Memory {
     }
 
     writeMemory(location, value) {
+        switch (this.mbcType) {
+            case 0:
+                this.writeMemoryMbcZero(location, value);
+                break;
+            case 1:
+                this.writeMemoryMbcOne(location, value);
+                break;
+            default:
+                throw new Error("Invalid MBC Type: This MBC Chip is not Implemented");
+        }
+
+    }
+
+    writeMemoryMbcZero(location, value) {
+        try {
+            if (location < 0x8000) {
+                throw new Error("Invalid Location: Tried Writing to ROM");
+            }
+            else if (location < 0xA000) {
+                this.vram.setData(location - 0x8000, value);
+            }
+            else if (location < 0xC000) {
+                this.ram.setData(location - 0xA000, value);
+            }
+            else if (location < 0xE000) {
+                this.wram.setData(location - 0xC000, value);
+            }
+            else if (location < 0xFE00)
+                return this.echoRam.setData(location - 0xE000, value);
+            else if (location < 0xFEA0) {
+                this.oam.setData(location - 0xFE00, value);
+            }
+            else if (location < 0xFF00)
+                return this.prohibited.setData(location - 0xFEA0, value);
+            else if (location < 0xFF80) {
+                if (location == 0xFF04) {
+                    this.io.setData(location - 0xFF00, 0);
+                }
+                else if (location == 0xFF46) {
+                    this.io.setData(location - 0xFF00, value);
+                    let source = Math.floor((value / 0x100));
+                    for (let i = 0; i < 160; i++) {
+                        this.oam[i] = this.readMemory(source);
+                        source++;
+                        this.cpu.tickClock(1)
+                    }
+                }
+                else {
+                    this.io.setData(location - 0xFF00, value);
+                }
+            }
+            else if (location < 0xFFFF) {
+                this.hram.setData(location - 0xFF80, value);
+            }
+            else if (location == 0xFFFF) {
+                this.ie.setData(0, value);
+            }
+            else {
+                throw new Error("Invalid Location: OUT OF BOUNDS");
+            }
+        }
+        catch (e) {
+            errorHandler(e);
+        }
+    }
+
+    writeMemoryMbcOne(location, value) {
         try {
             if (location < 0x2000) {
                 let low = value | 0xF;
