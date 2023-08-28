@@ -85,7 +85,52 @@ class RomBank {
             errorHandler(e);
         }
     }
+}
 
+class RamBank {
+    constructor(numBanks) {
+        this.selectedRomBank = 0;
+        this.numBanks = numBanks;
+        this.banks = new Array()
+        for (let i = 0; i < this.numBanks; i++) {
+            this.banks.push(new MemoryBlock(8192));
+        }
+    }
+
+    changeBank(bank) {
+        this.selectedRomBank = bank;
+    }
+
+    setData(location, value) {
+        try {
+            if (value > 255 || value < 0) {
+                throw new Error("Value Must Be Between 0x00 and 0xFF");
+            }
+            else if (location > 8192 || location < 0) {
+                throw new Error("Location Must Be Between 0 and " + String(8192 - 1));
+            }
+            else {
+                this.banks[this.selectedRomBank].data[location] = value;
+            }
+        }
+        catch (e) {
+            errorHandler(e);
+        }
+    }
+
+    getData(location) {
+        try {
+            if (location > this.size || location < 0) {
+                throw new Error("Location Must Be Between 0 and " + String(this.size - 1));
+            }
+            else {
+                return this.banks[this.selectedRomBank].data[location];
+            }
+        }
+        catch (e) {
+            errorHandler(e);
+        }
+    }
 }
 
 export class Memory {
@@ -140,9 +185,31 @@ export class Memory {
 
     initialize(romInput) {
         this.romInput = romInput;
+
         this.mbcType = this.romInput[0x147]
-        let exponent = this.romInput[0x148];
-        this.numRomBanks = (2 ** (exponent + 1));
+
+        let romSize = this.romInput[0x148];
+        this.numRomBanks = (2 ** (romSize + 1));
+
+        let ramSize = this.romInput[0x149];
+        switch (ramSize) {
+            case 0:
+                this.numRamBanks = 0;
+                break;
+            case 2:
+                this.numRamBanks = 1;
+                break;
+            case 3:
+                this.numRamBanks = 4;
+                break;
+            case 4:
+                this.numRamBanks = 16;
+                break;
+            case 5:
+                this.numRamBanks = 8;
+                break;
+        }
+
         this.ramEnabled = false;
         this.bankMode = false;
 
@@ -156,7 +223,7 @@ export class Memory {
         this.vram = new MemoryBlock(8192);
 
         /** 0xA000-0xBFFF */
-        this.ram = new MemoryBlock(8192);
+        this.ram = new RamBank(this.numRamBanks);
 
         /** 0xC000-0xDFFF */
         this.wram = new MemoryBlock(8192);
@@ -358,15 +425,28 @@ export class Memory {
             }
             else if (location < 0x4000) { //Writing to here will change the active ROM Bank 
                 //TODO
+                let maskedValue = value & 0x1F;
+                switch (maskedValue) {
+                    case 0:
+                        maskedValue = 1;
+                        break;
+                }
                 this.romBank.changeBank(value - 1);
             }
             else if (location < 0x6000) {
                 //TODO
                 //need to figure out ram if need bank or not
+                if (this.ramEnabled) {
+                    
+                }
             }
             else if (location < 0x8000) {
-                //TODO
-                //see pandocs to figure out later
+                if(value == 0){
+                    this.bankMode = false;
+                }
+                else if(value == 1){
+                    this.bankMode = true;
+                }
             }
             else if (location < 0xA000) {
                 this.vram.setData(location - 0x8000, value);

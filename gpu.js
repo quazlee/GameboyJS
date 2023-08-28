@@ -221,6 +221,7 @@ export class Gpu {
         else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 143) {
             this.mode = 1;
             this.scanLineTicks = 0;
+            this.windowYOffset = 0;
             this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
             this.memory.io.setData(0xF, this.memory.io.getData(0xF) | 1);
         }
@@ -357,6 +358,7 @@ export class Gpu {
             if (this.renderX < 20 && this.backgroundFetchBuffer.length == 0) {
                 this.backgroundFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
                 this.backgroundFetchStep = 1;
+                this.windowXOffset = 0;
             }
             else if (this.renderX == 20 && this.backgroundFetchBuffer.length == 0) {
                 this.renderX = 0;
