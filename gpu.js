@@ -258,9 +258,33 @@ export class Gpu {
      * This mode is where pixels are pushed to the screen.
      */
     modeThree() {
+        
+        this.backgroundFetchCycle();
+
+        for (let i = 0; i < 40; i++) {
+            let spriteX = this.memory.readMemory(this.oamBuffer[i] + 1);
+            let pixelX = (this.renderX - (8 - this.backgroundFetchBuffer));
+            if (spriteX <= pixelX + 8) {
+
+            }
+        }
+
+        if (this.backgroundFetchBuffer.length > 0 && this.renderX * 8 < 160) {
+            this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+            this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+            this.checkRenderWindow();
+            if (this.backgroundFetchBuffer.length == 0) {
+                this.renderX += 1;
+            }
+        }
+
+        this.scanLineTicks += 2;
+    }
+
+    backgroundFetchCycle(){
         if (this.backgroundFetchStep == 1) {
             let scy = this.memory.io.getData(0x42);
-            let scx = this.memory.io.getData(0x43);          
+            let scx = this.memory.io.getData(0x43);
 
             let lcdc = this.memory.io.getData(0x40);
             this.windowEnable = (lcdc & 0x20) >> 4;
@@ -273,7 +297,7 @@ export class Gpu {
             }
 
             let tileMapBase = 0x9800;
-            
+
 
             //Get the base address for the region of memory to fetch tile data from. Depends on lcdc bit 4.
             let base = 0x9000;
@@ -287,14 +311,14 @@ export class Gpu {
                 }
                 let tileMapXOffset = ((scx / 8) + this.renderX) & 0x1F;
                 let tileMapYOffset = ((scy + ly) & 0xFF);
-              
+
+                this.tileNumber = this.memory.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
+
                 if (base == 0x8000) {
-                    this.tileNumber = this.memory.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
                     let address = base + (16 * this.tileNumber);
                     this.fetchAddress = address + (2 * (tileMapYOffset % 8));
                 }
                 else {
-                    this.tileNumber = this.memory.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
                     let address = base + (16 * twosComplement(this.tileNumber));
                     this.fetchAddress = address + (2 * (tileMapYOffset % 8));
                 }
@@ -305,6 +329,17 @@ export class Gpu {
                 }
                 this.tileNumber = this.memory.readMemory(tileMapBase + this.windowXOffset + (32 * this.windowYOffset));
                 this.windowXOffset++;
+
+                this.tileNumber = this.memory.readMemory(tileMapBase + this.windowXOffset + (32 * Math.floor(this.windowYOffset / 8)));
+
+                if (base == 0x8000) {
+                    let address = base + (16 * this.tileNumber);
+                    this.fetchAddress = address + (2 * (this.windowYOffset % 8));
+                }
+                else {
+                    let address = base + (16 * twosComplement(this.tileNumber));
+                    this.fetchAddress = address + (2 * (this.windowYOffset % 8));
+                }
             }
 
             this.backgroundFetchStep = 2;
@@ -325,23 +360,12 @@ export class Gpu {
             else if (this.renderX == 20 && this.backgroundFetchBuffer.length == 0) {
                 this.renderX = 0;
                 this.mode = 0;
-                if(this.renderWindow){
+                if (this.renderWindow) {
                     this.windowYOffset++;
                 }
             }
         }
-        if (this.backgroundFetchBuffer.length > 0 && this.renderX * 8 < 160) {
-            this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
-            this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
-            this.checkRenderWindow();
-            if (this.backgroundFetchBuffer.length == 0) {
-                this.renderX += 1;
-            }
-        }
-
-        this.scanLineTicks += 2;
     }
-
     /**
      * Checks if the window should be rendered for the rest of the current scanline
      */
