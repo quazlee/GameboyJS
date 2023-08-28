@@ -415,9 +415,16 @@ export class Memory {
         }
     }
 
-    writeMemoryMbcThree(location, value) {//TODO
+    writeMemoryMbcThree(location, value) {//TODO 
         try {
-            if (location < 0x2000) {//TODO
+            if (location < 0x2000) {//RAM enable and Timer Enable
+                let low = value | 0xF;
+                if (low == 0xA) {
+                    this.ramEnabled = true;
+                }
+                else {
+                    this.ramEnabled = false;
+                }
             }
             else if (location < 0x4000) {//TODO
             }
@@ -438,13 +445,11 @@ export class Memory {
             }
             else if (location < 0xFE00)
                 return this.echoRam.setData(location - 0xE000, value);
-            // throw new Error("Invalid Location: ECHO RAM");
             else if (location < 0xFEA0) {
                 this.oam.setData(location - 0xFE00, value);
             }
             else if (location < 0xFF00)
                 return this.prohibited.setData(location - 0xFEA0, value);
-            // throw new Error("Invalid Location: PROHIBITED");
             else if (location < 0xFF80) {
                 if (location == 0xFF04) {
                     this.io.setData(location - 0xFF00, 0);
