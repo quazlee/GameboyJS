@@ -277,11 +277,14 @@ export class Memory {
 
     writeMemory(location, value) {
         switch (this.mbcType) {
-            case 0:
+            case 0://No MBC
                 this.writeMemoryMbcZero(location, value);
                 break;
-            case 1:
+            case 1://MBC1
                 this.writeMemoryMbcOne(location, value);
+                break;
+            case 0x13://MBC3+RAM+BATTERY
+                this.writeMemoryMbcThree(location, value);
                 break;
             default:
                 throw new Error("Invalid MBC Type: This MBC Chip is not Implemented");
