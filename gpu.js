@@ -286,7 +286,7 @@ export class Gpu {
                         else {
                             this.bgPriority = false;
                         }
-                        this.oamTileNumber = this.oamBuffer[i].tileIndex;
+                        this.currentOamTile = this.oamBuffer[i];
                         this.isFetchingSprite = true;
                         this.oamBuffer.splice(i, 1);
                     }
@@ -420,8 +420,12 @@ export class Gpu {
                 let scy = this.memory.io.getData(0x42);
                 let ly = this.memory.io.getData(0x44);
                 let tileMapYOffset = ((scy + ly) & 0xFF);
-                let address = 0x8000 + (16 * this.oamTileNumber);
+                let address = 0x8000 + (16 * this.currentOamTile.tileIndex);
                 this.fetchAddress = address + (2 * (tileMapYOffset % 8));
+                let spriteSize = ((this.memory.io.getData(0x40) & 0x4) >> 2);
+                if(spriteSize && (this.currentOamTile.oamAddress & 1) == 0 && (tileMapYOffset % 8) == 7){
+                    this.memory.writeMemory(this.currentOamTile.oamAddress + 2, this.memory.readMemory(this.currentOamTile.oamAddress + 2) + 1);
+                }
                 this.spriteFetchStep = 2;
                 break;
             }
@@ -466,17 +470,19 @@ export class Gpu {
             this.oamBuffer.push(new Sprite(spriteY,
                 spriteX,
                 this.memory.readMemory(this.oamLocation + 2),
-                this.memory.readMemory(this.oamLocation + 3)));
+                this.memory.readMemory(this.oamLocation + 3),
+                this.oamLocation));
         }
         this.oamLocation += 4;
     }
 }
 
 class Sprite {
-    constructor(yPos, xPos, tileIndex, attributes) {
+    constructor(yPos, xPos, tileIndex, attributes, oamAddress) {
         this.yPos = yPos;
         this.xPos = xPos;
         this.tileIndex = tileIndex;
         this.attributes = attributes;
+        this.oamAddress = oamAddress;
     }
 }
