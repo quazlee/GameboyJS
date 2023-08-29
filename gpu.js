@@ -273,6 +273,7 @@ export class Gpu {
             this.backgroundFetchCycle();
 
             if (this.spriteFetchBuffer.length == 0) {
+                
                 let i = 0;
                 while (i < this.oamBuffer.length && !this.isFetchingSprite) {
                     let spriteX = this.oamBuffer[i].xPos;
