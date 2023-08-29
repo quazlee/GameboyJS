@@ -276,7 +276,6 @@ export class Gpu {
             if (this.spriteFetchBuffer.length == 0) {
                 let i = 0;
                 while (i < this.oamBuffer.length && !this.isFetchingSprite) {
-                    // for (let i = 0; i < this.oamBuffer.length; i++) {
                     let spriteX = this.oamBuffer[i].xPos;
                     let pixelX = ((this.renderX * 8) + (8 - this.backgroundFetchBuffer.length));
                     if (spriteX <= pixelX + 8) {
@@ -305,7 +304,8 @@ export class Gpu {
                     this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
                     this.spriteFetchBuffer.shift();
                 }
-                else if (this.spriteFetchBuffer.length != 0 && this.bgPriority) {
+                else if (this.spriteFetchBuffer.length != 0 && 
+                    this.backgroundFetchBuffer[0] != 0 && this.spriteFetchBuffer[0] != 0 && this.bgPriority) {
                     this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
                     this.spriteFetchBuffer.shift();
                 }

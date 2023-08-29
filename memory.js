@@ -468,12 +468,10 @@ export class Memory {
                 if (location == 0xFF04) {
                     this.io.setData(location - 0xFF00, 0);
                 }
-                else if (location == 0xFF46) {
+                else if (location == 0xFF46) { //OAM DMA
                     this.io.setData(location - 0xFF00, value);
-                    let source = Math.floor((value / 0x100));
                     for (let i = 0; i < 160; i++) {
-                        this.oam[i] = this.readMemory(source);
-                        source++;
+                        this.oam.setData(i, this.readMemory((value << 8) | i));
                         this.cpu.tickClock(1)
                     }
                 }
@@ -535,12 +533,10 @@ export class Memory {
                 if (location == 0xFF04) {
                     this.io.setData(location - 0xFF00, 0);
                 }
-                else if (location == 0xFF46) {
+                else if (location == 0xFF46) { //OAM DMA
                     this.io.setData(location - 0xFF00, value);
-                    let source = Math.floor((value / 0x100));
                     for (let i = 0; i < 160; i++) {
-                        this.oam[i] = this.readMemory(source);
-                        source++;
+                        this.oam.setData(i, this.readMemory((value << 8) | i));
                         this.cpu.tickClock(1)
                     }
                 }
