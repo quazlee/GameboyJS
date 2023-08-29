@@ -269,7 +269,6 @@ export class Gpu {
      * This mode is where pixels are pushed to the screen.
      */
     modeThree() {
-
         if (!this.isFetchingSprite) {
             this.backgroundFetchCycle();
 
@@ -289,6 +288,9 @@ export class Gpu {
                         this.currentOamTile = this.oamBuffer[i];
                         this.isFetchingSprite = true;
                         this.oamBuffer.splice(i, 1);
+                        while(this.backgroundFetchBuffer.length < 8){
+                            this.backgroundFetchBuffer.push(0);
+                        }
                     }
                     i++;
                 }
@@ -440,6 +442,9 @@ export class Gpu {
             case 4:
                 if (this.renderX < 20 && this.spriteFetchBuffer.length == 0) {
                     this.spriteFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
+                    if((this.currentOamTile.attributes & 0x20) >> 5){
+                        this.spriteFetchBuffer.reverse();
+                    }
                 }
                 this.isFetchingSprite = false;
                 this.spriteFetchStep = 1;
