@@ -26,18 +26,6 @@ export class Gpu {
         this.scanLine = 0;
         this.scanLineTicks = 0;
 
-        this.tileMapOne = document.getElementById("tile-map-one");
-        this.tileMapOneCtx = this.tileMapOne.getContext("2d");
-        this.tileMapTwo = document.getElementById("tile-map-two");
-        this.tileMapTwoCtx = this.tileMapTwo.getContext("2d");
-        this.tileMapThree = document.getElementById("tile-map-three");
-        this.tileMapThreeCtx = this.tileMapThree.getContext("2d");
-
-        this.backgroundOne = document.getElementById("background-one");
-        this.backgroundOneCtx = this.backgroundOne.getContext("2d");
-        this.backgroundTwo = document.getElementById("background-two");
-        this.backgroundTwoCtx = this.backgroundTwo.getContext("2d");
-
         this.oamLocation = 0xFE00;
         this.oamBuffer = [];
         this.bgPriority = false;

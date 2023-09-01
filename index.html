@@ -20,17 +20,18 @@
     <header>Gameboy Emulator</header>
     <div class="main-column">
         <div class="canvas-wrapper">
-            <!-- <canvas id="gameboyCanvas" width="160" height="144"></canvas> -->
             <canvas id="gameboyCanvas" width="160" height="144"></canvas>
         </div>
 
         <input type="file" id="romInput" accept=".gb" autocomplete="off">
 
-        <div class="debug-tools">
-            <div id="debug-checkbox">
-                <input type="checkbox" name="is-debug" id="is-debug" autocomplete="off">
-                <label for="is-debug">View Debug Tools</label>
-            </div>
+        <div id="debug-checkbox">
+            <input type="checkbox" name="is-debug" id="is-debug" autocomplete="off">
+            <label for="is-debug">View Debug Tools</label>
+        </div>
+
+        <div id="debug-tools-container">
+            
 
             <div class="debug-tool" id="debug-options">
                 <div class="multiselect">
@@ -107,15 +108,15 @@
             </div>
 
 
-            
-            <div class="canvas-container">
-                <canvas class="debug-tool" id="tile-map-one" width="96" height="88"></canvas>
-                <canvas class="debug-tool" id="tile-map-two" width="96" height="88"></canvas>
-                <canvas class="debug-tool" id="tile-map-three" width="96" height="88"></canvas>
+            <div class="debug-tool" id="tile-map-container">
+                <div class="canvas-wrapper" >
+                    <canvas id="tile-map-canvas" width="128" height="192"></canvas>
+                </div>
             </div>
-            <div class="canvas-container">
-                <canvas class="debug-tool" id="background-one" width="256" height="256"></canvas>
-                <canvas class="debug-tool" id="background-two" width="256" height="256"></canvas>
+            <div class="debug-tool" id="canvas-container">
+                <div class="canvas-wrapper" >
+                    <canvas id="background-canvas" width="256" height="256"></canvas>
+                </div>
             </div>
         </div>
     </div>

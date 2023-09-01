@@ -22,6 +22,8 @@ export class Debug {
         this.viewDebug = document.getElementById("is-debug");
         this.viewDebug.addEventListener("change", this.viewDebugChange.bind(this));
 
+        this.debugTools = document.getElementById("debug-tools-container");
+
         this.dropdown = document.getElementById("selectBox");
         this.dropdownCheckboxes = document.getElementById("dropdown-options");
         this.dropdownExpanded = false;
@@ -45,6 +47,14 @@ export class Debug {
         this.toggleLogging = document.getElementById("toggle-logging");
         this.toggleBackgroundMaps = document.getElementById("toggle-background-maps");
         this.toggleTileMaps = document.getElementById("toggle-tile-maps");
+
+        this.tileMapCanvas = document.getElementById("tile-map-canvas");
+        this.tileMapCanvasCtx = this.tileMapCanvas.getContext("2d");
+        this.tileMapContainer = document.getElementById("tile-map-container");
+        this.toggleTileMaps.addEventListener("change", this.toggleTileMapsChange.bind(this));
+
+        this.backgroundCanvas = document.getElementById("background-canvas");
+        this.backgroundCanvasCtx = this.backgroundCanvas.getContext("2d");
     }
 
     setMemory(memory) {
@@ -61,16 +71,19 @@ export class Debug {
 
     viewDebugChange() {
         if (this.viewDebug.checked) {
-            let elements = document.getElementsByClassName("debug-tool");
-            for (let index = 0; index < elements.length; index++) {
-                elements[index].style.display = "block";
-            }
+            this.debugTools.style.display = "block";
         }
         else {
-            let elements = document.getElementsByClassName("debug-tool");
-            for (let index = 0; index < elements.length; index++) {
-                elements[index].style.display = "none";
-            }
+            this.debugTools.style.display = "none";
+        }
+    }
+
+    toggleTileMapsChange() {
+        if (this.toggleTileMaps.checked) {
+            this.tileMapContainer.style.display = "block";
+        }
+        else {
+            this.tileMapContainer.style.display = "none";
         }
     }
 
@@ -306,40 +319,16 @@ export class Debug {
    */
     drawTileMaps() {
         if (this.toggleTileMaps.checked) {
-            this.gpu.tileMapOneCtx.clearRect(0, 0, this.gpu.tileMapOne.width, this.gpu.tileMapOne.height);
-            for (let y = 0; y < 11; y++) {
-                for (let x = 0; x < 12; x++) {
+            this.tileMapCanvasCtx.clearRect(0, 0, this.tileMapCanvas.width, this.tileMapCanvas.height);
+            for (let y = 0; y < 24; y++) {
+                for (let x = 0; x < 16; x++) {
                     let base = 0x8000 + (x * 16) + (y * 192);
                     let tileSet = [];
                     for (let i = 0; i < 16; i++) {
                         tileSet.push(this.memory.readMemory(base + i));
                     }
                     let decodedTile = this.gpu.decodeTile(tileSet);
-                    this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.tileMapOneCtx);
-                }
-            }
-            this.gpu.tileMapTwoCtx.clearRect(0, 0, this.gpu.tileMapTwo.width, this.gpu.tileMapTwo.height);
-            for (let y = 0; y < 11; y++) {
-                for (let x = 0; x < 12; x++) {
-                    let base = 0x8800 + (x * 16) + (y * 192);
-                    let tileSet = [];
-                    for (let i = 0; i < 16; i++) {
-                        tileSet.push(this.memory.readMemory(base + i));
-                    }
-                    let decodedTile = this.gpu.decodeTile(tileSet);
-                    this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.tileMapTwoCtx);
-                }
-            }
-            this.gpu.tileMapThreeCtx.clearRect(0, 0, this.gpu.tileMapThree.width, this.gpu.tileMapThree.height);
-            for (let y = 0; y < 11; y++) {
-                for (let x = 0; x < 12; x++) {
-                    let base = 0x9000 + (x * 16) + (y * 192);
-                    let tileSet = [];
-                    for (let i = 0; i < 16; i++) {
-                        tileSet.push(this.memory.readMemory(base + i));
-                    }
-                    let decodedTile = this.gpu.decodeTile(tileSet);
-                    this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.tileMapThreeCtx);
+                    this.gpu.drawTile(decodedTile, x * 8, y * 8, this.tileMapCanvasCtx);
                 }
             }
         }
@@ -362,7 +351,7 @@ export class Debug {
                     this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.backgroundOneCtx);
                 }
             }
-    
+
             this.gpu.backgroundTwoCtx.clearRect(0, 0, this.gpu.backgroundTwo.width, this.gpu.backgroundTwo.height);
             for (let y = 0; y < 32; y++) {
                 for (let x = 0; x < 32; x++) {

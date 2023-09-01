@@ -3,6 +3,11 @@
     border: 1px solid black;
     margin: 5px;
 }
+#debug-options{
+    display: flex;
+    border: 1px solid black;
+    margin: 5px;
+}
 
 header {
     width: 100%;
@@ -42,8 +47,8 @@ body {
     height: 432px;    
 }
 
-.debug-tools {
-    display: flex;
+#debug-tools-container {
+    display: none;
     justify-content: flex-start;
     flex-direction: column;
 
@@ -71,3 +76,4 @@ canvas {
 #flags {
     padding-left: 20px;
 }
+
