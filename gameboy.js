@@ -1,6 +1,6 @@
 import { Cpu } from "./cpu.js";
 import { Debug } from "./debug.js";
-import { Gpu } from "./gpu.js";
+import { Ppu } from "./ppu.js";
 import { Memory } from "./memory.js";
 import { Controls } from "./controls.js";
 
@@ -8,7 +8,7 @@ export class Gameboy {
     constructor() {
         this.memory = new Memory();
         this.cpu = new Cpu();
-        this.gpu = new Gpu();
+        this.ppu = new Ppu();
         this.debug = new Debug();
         this.controls = new Controls();
 
@@ -27,13 +27,13 @@ export class Gameboy {
 
         this.cpu.setMemory(this.memory);
         this.cpu.setDebug(this.debug);
-        this.cpu.setGpu(this.gpu);
+        this.cpu.setPpu(this.ppu);
 
-        this.gpu.setMemory(this.memory);
+        this.ppu.setMemory(this.memory);
 
         this.debug.setMemory(this.memory);
         this.debug.setCpu(this.cpu);
-        this.debug.setGpu(this.gpu);
+        this.debug.setPpu(this.ppu);
 
         this.controls.setMemory(this.memory);
         
@@ -41,7 +41,7 @@ export class Gameboy {
     }
 
     mainLoop() {
-        while(this.gpu.frameReady == false){
+        while(this.ppu.frameReady == false){
             this.cpu.interrupt();
 
             this.debug.logger(); 
@@ -55,7 +55,7 @@ export class Gameboy {
             this.debug.downloadLog();
             this.debug.logString = "";
         }
-        this.gpu.frameReady = false;
+        this.ppu.frameReady = false;
 
         this.debug.drawTileMaps();
         this.debug.drawBackgroundMaps();
@@ -68,7 +68,7 @@ export class Gameboy {
      */
     testTile(){
         let tile = [0x3c, 0x7e, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x7e, 0x5e, 0x7e, 0x0a, 0x7c, 0x56, 0x38, 0x7c]
-        let decodedTile = this.gpu.decodeTile(tile)
-        this.gpu.drawTile(decodedTile, 0, 0, this.gpu.viewportCtx);
+        let decodedTile = this.ppu.decodeTile(tile)
+        this.ppu.drawTile(decodedTile, 0, 0, this.ppu.viewportCtx);
     }
 }

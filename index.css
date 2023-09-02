@@ -54,13 +54,15 @@ body {
 
 }
 
-canvas {
+#viewport-canvas {
     box-shadow: 1px 1px 10px 1px black;
     width: 480px;
     height: 432px;
-    /* width: 160px;
-    height: 144px; */
     background-color: rgba(172, 172, 172, 1);
+}
+#tile-map-canvas, #background-canvas{
+    background-color: rgba(172, 172, 172, 1);
+    box-shadow: 1px 1px 10px 1px black;
 }
 
 .canvas-container {

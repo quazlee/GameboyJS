@@ -20,7 +20,7 @@
     <header>Gameboy Emulator</header>
     <div class="main-column">
         <div class="canvas-wrapper">
-            <canvas id="gameboyCanvas" width="160" height="144"></canvas>
+            <canvas id="viewport-canvas" width="160" height="144"></canvas>
         </div>
 
         <input type="file" id="romInput" accept=".gb" autocomplete="off">
@@ -51,8 +51,8 @@
                             <label for="toggle-tile-maps">Tile Maps</label>
                         </div>
                         <div class="dropdown-option">
-                            <input type="checkbox" name="toggle-background-maps" id="toggle-background-maps" />
-                            <label for="toggle-background-maps">Background Maps</label>
+                            <input type="checkbox" name="toggle-background" id="toggle-background" />
+                            <label for="toggle-background">Background Maps</label>
                         </div>
                     </div>
                 </div>
@@ -113,7 +113,7 @@
                     <canvas id="tile-map-canvas" width="128" height="192"></canvas>
                 </div>
             </div>
-            <div class="debug-tool" id="canvas-container">
+            <div class="debug-tool" id="background-container">
                 <div class="canvas-wrapper" >
                     <canvas id="background-canvas" width="256" height="256"></canvas>
                 </div>

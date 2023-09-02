@@ -1,7 +1,7 @@
 import { RegisterCollection } from "./registercollection.js"
 import { Memory } from "./memory.js";
 import { twosComplement } from "./utility.js";
-import { Gpu } from "./gpu.js";
+import { Ppu } from "./ppu.js";
 import { errorHandler } from "./errorhandler.js";
 
 const registerID = {
@@ -37,7 +37,7 @@ export class Cpu {
         this.debug = debug;
     }
 
-    setGpu(gpu) {
+    setPpu(gpu) {
         this.gpu = gpu;
     }
 

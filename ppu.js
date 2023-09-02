@@ -2,13 +2,13 @@ import { twosComplement } from "./utility.js";
 import { errorHandler } from "./errorhandler.js";
 import { Memory } from "./memory.js";
 
-export class Gpu {
+export class Ppu {
     constructor() {
         this.memory = null;
 
         this.frameReady = false;
 
-        this.viewport = document.getElementById("gameboyCanvas");
+        this.viewport = document.getElementById("viewport-canvas");
         this.viewportCtx = this.viewport.getContext("2d");
         this.screenWidth = 160;
         this.screenHeight = 144;
@@ -52,6 +52,7 @@ export class Gpu {
 
         this.backgroundFetchStep = 1;
         this.backgroundFetchBuffer = [];
+        this.backgroundFetchXPos = 0;
 
         this.spriteFetchStep = 1;
         this.spriteFetchBuffer = [];
@@ -208,6 +209,9 @@ export class Gpu {
             this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
             this.oamLocation = 0xFE00;
             this.oamBuffer = [];
+            this.backgroundFetchBuffer = [];
+            this.backgroundFetchStep = 1;
+            this.backgroundFetchXPos = 0;
         }
         else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 143) {
             this.mode = 1;
@@ -217,6 +221,9 @@ export class Gpu {
             this.memory.io.setData(0xF, this.memory.io.getData(0xF) | 1);
             this.oamLocation = 0xFE00;
             this.oamBuffer = [];
+            this.backgroundFetchBuffer = [];
+            this.backgroundFetchStep = 1;
+            this.backgroundFetchXPos = 0;
         }
     }
 
@@ -346,7 +353,7 @@ export class Gpu {
                 if ((lcdc & 0x8) >> 3) {
                     tileMapBase = 0x9C00;
                 }
-                let tileMapXOffset = ((scx / 8) + this.renderX) & 0x1F;
+                let tileMapXOffset = ((scx / 8) + this.backgroundFetchXPos) & 0x1F;
                 let tileMapYOffset = ((scy + ly) & 0xFF);
 
                 this.tileNumber = this.memory.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
@@ -378,7 +385,7 @@ export class Gpu {
                     this.fetchAddress = address + (2 * (this.windowYOffset % 8));
                 }
             }
-
+            this.backgroundFetchXPos += 1;
             this.backgroundFetchStep = 2;
         }
         else if (this.backgroundFetchStep == 2) {
@@ -429,7 +436,7 @@ export class Gpu {
                 this.spriteFetchStep = 4;
                 break;
             case 4:
-                if (this.renderX < 20 && this.spriteFetchBuffer.length == 0) {
+                if (this.backgroundFetchXPos < 20 && this.spriteFetchBuffer.length == 0) {
                     this.spriteFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
                     if((this.currentOamTile.attributes & 0x20) >> 5){
                         this.spriteFetchBuffer.reverse();

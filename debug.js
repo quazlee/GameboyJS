@@ -15,7 +15,7 @@ export class Debug {
     constructor() {
         this.memory = null;
         this.cpu = null;
-        this.gpu = null
+        this.ppu = null
         this.breakpoint = false;
 
         // Enable Debug Tools
@@ -45,7 +45,7 @@ export class Debug {
         this.blarggString = "";
 
         this.toggleLogging = document.getElementById("toggle-logging");
-        this.toggleBackgroundMaps = document.getElementById("toggle-background-maps");
+        this.toggleBackground = document.getElementById("toggle-background");
         this.toggleTileMaps = document.getElementById("toggle-tile-maps");
 
         this.tileMapCanvas = document.getElementById("tile-map-canvas");
@@ -55,6 +55,8 @@ export class Debug {
 
         this.backgroundCanvas = document.getElementById("background-canvas");
         this.backgroundCanvasCtx = this.backgroundCanvas.getContext("2d");
+        this.backgroundContainer = document.getElementById("background-container");
+        this.toggleBackground.addEventListener("change", this.toggleBackgroundChange.bind(this));
     }
 
     setMemory(memory) {
@@ -65,8 +67,8 @@ export class Debug {
         this.cpu = cpu;
     }
 
-    setGpu(gpu) {
-        this.gpu = gpu;
+    setPpu(gpu) {
+        this.ppu = gpu;
     }
 
     viewDebugChange() {
@@ -84,6 +86,14 @@ export class Debug {
         }
         else {
             this.tileMapContainer.style.display = "none";
+        }
+    }
+    toggleBackgroundChange() {
+        if (this.toggleBackground.checked) {
+            this.backgroundContainer.style.display = "block";
+        }
+        else {
+            this.backgroundContainer.style.display = "none";
         }
     }
 
@@ -327,8 +337,8 @@ export class Debug {
                     for (let i = 0; i < 16; i++) {
                         tileSet.push(this.memory.readMemory(base + i));
                     }
-                    let decodedTile = this.gpu.decodeTile(tileSet);
-                    this.gpu.drawTile(decodedTile, x * 8, y * 8, this.tileMapCanvasCtx);
+                    let decodedTile = this.ppu.decodeTile(tileSet);
+                    this.ppu.drawTile(decodedTile, x * 8, y * 8, this.tileMapCanvasCtx);
                 }
             }
         }
@@ -338,30 +348,17 @@ export class Debug {
      * Used to draw background and window maps for the debug tools.
      */
     drawBackgroundMaps() {
-        if (this.toggleBackgroundMaps.checked) {
-            this.gpu.backgroundOneCtx.clearRect(0, 0, this.gpu.backgroundOne.width, this.gpu.backgroundOne.height);
+        if (this.toggleBackground.checked) {
+            this.ppu.backgroundCanvasCtx.clearRect(0, 0, this.ppu.backgroundCanvasCtx.width, this.ppu.backgroundCanvasCtx.height);
             for (let y = 0; y < 32; y++) {
                 for (let x = 0; x < 32; x++) {
-                    let tileNumber = this.memory.readMemory(this.gpu.backgroundOneBase + (x) + (y * 32));
+                    let tileNumber = this.memory.readMemory(this.ppu.backgroundOneBase + (x) + (y * 32));
                     let tileSet = [];
                     for (let i = 0; i < 16; i++) {
                         tileSet.push(this.memory.readMemory(0x8000 + (tileNumber * 16) + i));
                     }
-                    let decodedTile = this.gpu.decodeTile(tileSet);
-                    this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.backgroundOneCtx);
-                }
-            }
-
-            this.gpu.backgroundTwoCtx.clearRect(0, 0, this.gpu.backgroundTwo.width, this.gpu.backgroundTwo.height);
-            for (let y = 0; y < 32; y++) {
-                for (let x = 0; x < 32; x++) {
-                    let tileNumber = this.memory.readMemory(this.gpu.backgroundTwoBase + (x) + (y * 32));
-                    let tileSet = [];
-                    for (let i = 0; i < 16; i++) {
-                        tileSet.push(this.memory.readMemory(0x9000 + (twosComplement(tileNumber) * 16) + i));
-                    }
-                    let decodedTile = this.gpu.decodeTile(tileSet);
-                    this.gpu.drawTile(decodedTile, x * 8, y * 8, this.gpu.backgroundTwoCtx);
+                    let decodedTile = this.ppu.decodeTile(tileSet);
+                    this.ppu.drawTile(decodedTile, x * 8, y * 8, this.ppu.backgroundOneCtx);
                 }
             }
         }
