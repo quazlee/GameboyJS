@@ -349,16 +349,16 @@ export class Debug {
      */
     drawBackgroundMaps() {
         if (this.toggleBackground.checked) {
-            this.ppu.backgroundCanvasCtx.clearRect(0, 0, this.ppu.backgroundCanvasCtx.width, this.ppu.backgroundCanvasCtx.height);
+            this.backgroundCanvasCtx.clearRect(0, 0, this.backgroundCanvasCtx.width, this.backgroundCanvasCtx.height);
             for (let y = 0; y < 32; y++) {
                 for (let x = 0; x < 32; x++) {
-                    let tileNumber = this.memory.readMemory(this.ppu.backgroundOneBase + (x) + (y * 32));
+                    let tileNumber = this.memory.readMemory(0x9800 + (x) + (y * 32));
                     let tileSet = [];
                     for (let i = 0; i < 16; i++) {
                         tileSet.push(this.memory.readMemory(0x8000 + (tileNumber * 16) + i));
                     }
                     let decodedTile = this.ppu.decodeTile(tileSet);
-                    this.ppu.drawTile(decodedTile, x * 8, y * 8, this.ppu.backgroundOneCtx);
+                    this.ppu.drawTile(decodedTile, x * 8, y * 8, this.backgroundCanvasCtx);
                 }
             }
         }

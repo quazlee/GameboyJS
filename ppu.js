@@ -53,6 +53,7 @@ export class Ppu {
         this.backgroundFetchStep = 1;
         this.backgroundFetchBuffer = [];
         this.backgroundFetchXPos = 0;
+        this.firstBackgroundFetch = true;
 
         this.spriteFetchStep = 1;
         this.spriteFetchBuffer = [];
@@ -212,6 +213,7 @@ export class Ppu {
             this.backgroundFetchBuffer = [];
             this.backgroundFetchStep = 1;
             this.backgroundFetchXPos = 0;
+            this.firstBackgroundFetch = true;
         }
         else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 143) {
             this.mode = 1;
@@ -224,6 +226,7 @@ export class Ppu {
             this.backgroundFetchBuffer = [];
             this.backgroundFetchStep = 1;
             this.backgroundFetchXPos = 0;
+            this.firstBackgroundFetch = true;
         }
     }
 
@@ -273,7 +276,7 @@ export class Ppu {
                 while (i < this.oamBuffer.length && !this.isFetchingSprite) {
                     let spriteX = this.oamBuffer[i].xPos;
                     let pixelX = ((this.renderX * 8) + (8 - this.backgroundFetchBuffer.length));
-                    if (spriteX <= pixelX + 8) {
+                    if (spriteX <= pixelX + 8 && !(this.firstBackgroundFetch && spriteX > 8)) {
                         this.backgroundFetchStep = 1;
                         if (this.oamBuffer[i].attributes >> 7) {
                             this.bgPriority = true;
@@ -408,6 +411,9 @@ export class Ppu {
                 if (this.renderWindow) {
                     this.windowYOffset++;
                 }
+            }
+            if(this.firstBackgroundFetch){
+                this.firstBackgroundFetch = false;
             }
         }
     }
