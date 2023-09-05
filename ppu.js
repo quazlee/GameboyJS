@@ -54,6 +54,7 @@ export class Ppu {
         this.backgroundFetchBuffer = [];
         this.backgroundFetchXPos = 0;
         this.firstBackgroundFetch = true;
+        this.transparentTilesAdded = 0;
 
         this.spriteFetchStep = 1;
         this.spriteFetchBuffer = [];
@@ -271,7 +272,7 @@ export class Ppu {
             this.backgroundFetchCycle();
 
             if (this.spriteFetchBuffer.length == 0) {
-                
+
                 let i = 0;
                 while (i < this.oamBuffer.length && !this.isFetchingSprite) {
                     let spriteX = this.oamBuffer[i].xPos;
@@ -287,9 +288,10 @@ export class Ppu {
                         this.currentOamTile = this.oamBuffer[i];
                         this.isFetchingSprite = true;
                         this.oamBuffer.splice(i, 1);
-                        while(this.backgroundFetchBuffer.length < 8){
-                            this.backgroundFetchBuffer.push(0);
-                        }
+                        // this.transparentTilesAdded = 8 - this.backgroundFetchBuffer.length;
+                        // while(this.backgroundFetchBuffer.length < 8){
+                        //     this.backgroundFetchBuffer.push(0);
+                        // }
                     }
                     i++;
                 }
@@ -299,22 +301,28 @@ export class Ppu {
             this.spriteFetchCycle();
         }
 
+        // if(this.backgroundFetchBuffer.length == 8 && (this.spriteFetchBuffer.length > 0 && this.spriteFetchBuffer.length < 8)){
+        //     while(this.spriteFetchBuffer.length < 8){
+        //         this.spriteFetchBuffer.push(0);
+        //     }
+        // }
+
         if (!this.isFetchingSprite && this.backgroundFetchBuffer.length > 0 && this.renderX * 8 < 160) {
             for (let i = 0; i < 2; i++) {
-                if (this.spriteFetchBuffer.length != 0 && this.spriteFetchBuffer[0] == 0) {
+                if (this.spriteFetchBuffer.length != 0 && this.spriteFetchBuffer[0] == 0 && this.backgroundFetchBuffer.length != 0) {
                     this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
                     this.spriteFetchBuffer.shift();
                 }
-                else if (this.spriteFetchBuffer.length != 0 && 
-                    this.backgroundFetchBuffer[0] != 0 && this.spriteFetchBuffer[0] != 0 && this.bgPriority) {
+                else if (this.spriteFetchBuffer.length != 0 &&
+                    this.backgroundFetchBuffer[0] != 0 && this.spriteFetchBuffer[0] != 0 && this.bgPriority && this.backgroundFetchBuffer.length != 0) {
                     this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
                     this.spriteFetchBuffer.shift();
                 }
-                else if (this.spriteFetchBuffer.length != 0) {
-                    this.spriteFetchBuffer = this.drawTile2(this.spriteFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+                else if (this.spriteFetchBuffer.length != 0 && this.backgroundFetchBuffer.length != 0) {
+                    this.spriteFetchBuffer = this.drawTile2(this.spriteFetchBuffer, this.currentOamTile.xPos - 8, (this.memory.io.getData(0x44)), this.viewportCtx);
                     this.backgroundFetchBuffer.shift();
                 }
-                else if (this.spriteFetchBuffer.length == 0) {
+                else if (this.spriteFetchBuffer.length == 0 && this.backgroundFetchBuffer.length != 0) {
                     this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
                 }
             }
@@ -356,7 +364,7 @@ export class Ppu {
                 if ((lcdc & 0x8) >> 3) {
                     tileMapBase = 0x9C00;
                 }
-                let tileMapXOffset = ((scx / 8) + this.backgroundFetchXPos) & 0x1F;
+                let tileMapXOffset = ((scx / 8) + (this.backgroundFetchXPos)) & 0x1F;
                 let tileMapYOffset = ((scy + ly) & 0xFF);
 
                 this.tileNumber = this.memory.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
@@ -402,6 +410,9 @@ export class Ppu {
         else if (this.backgroundFetchStep == 4) {
             if (this.renderX < 20 && this.backgroundFetchBuffer.length == 0) {
                 this.backgroundFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
+                //TODO SUBTILE SCROLLING
+                // let scx = this.memory.io.getData(0x43);
+                // this.backgroundFetchBuffer.splice(0, scx % 8);
                 this.backgroundFetchStep = 1;
                 this.windowXOffset = 0;
             }
@@ -412,7 +423,7 @@ export class Ppu {
                     this.windowYOffset++;
                 }
             }
-            if(this.firstBackgroundFetch){
+            if (this.firstBackgroundFetch) {
                 this.firstBackgroundFetch = false;
             }
         }
@@ -427,7 +438,7 @@ export class Ppu {
                 let address = 0x8000 + (16 * this.currentOamTile.tileIndex);
                 this.fetchAddress = address + (2 * (tileMapYOffset % 8));
                 let spriteSize = ((this.memory.io.getData(0x40) & 0x4) >> 2);
-                if(spriteSize && (this.currentOamTile.oamAddress & 1) == 0 && (tileMapYOffset % 8) == 7){
+                if (spriteSize && (this.currentOamTile.oamAddress & 1) == 0 && (tileMapYOffset % 8) == 7) {
                     this.memory.writeMemory(this.currentOamTile.oamAddress + 2, this.memory.readMemory(this.currentOamTile.oamAddress + 2) + 1);
                 }
                 this.spriteFetchStep = 2;
@@ -444,7 +455,7 @@ export class Ppu {
             case 4:
                 if (this.backgroundFetchXPos < 20 && this.spriteFetchBuffer.length == 0) {
                     this.spriteFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
-                    if((this.currentOamTile.attributes & 0x20) >> 5){
+                    if ((this.currentOamTile.attributes & 0x20) >> 5) {
                         this.spriteFetchBuffer.reverse();
                     }
                 }
@@ -458,7 +469,7 @@ export class Ppu {
      */
     checkRenderWindow() {
         let wx = this.memory.io.getData(0x4B);
-        if (!this.renderWindow && this.windowEnable && this.hasWyEqualedLy && (this.renderX - (8 - this.backgroundFetchBuffer)) >= (wx - 7)) {
+        if (!this.renderWindow && this.windowEnable && this.hasWyEqualedLy && (this.backgroundFetchXPos - (8 - this.backgroundFetchBuffer)) >= (wx - 7)) {
             this.renderWindow = true;
             this.backgroundFetchStep = 1;
             this.backgroundFetchBuffer = [];

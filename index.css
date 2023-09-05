@@ -58,7 +58,7 @@ body {
     box-shadow: 1px 1px 10px 1px black;
     width: 480px;
     height: 432px;
-    background-color: rgba(172, 172, 172, 1);
+    background-color: rgb(255, 0, 0);
 }
 #tile-map-canvas, #background-canvas{
     background-color: rgba(172, 172, 172, 1);

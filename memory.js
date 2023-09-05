@@ -506,6 +506,13 @@ export class Memory {
                 }
             }
             else if (location < 0x4000) {//TODO
+                let maskedValue = value & 0x1F;
+                switch (maskedValue) {
+                    case 0:
+                        maskedValue = 1;
+                        break;
+                }
+                this.romBank.changeBank(value - 1);
             }
             else if (location < 0x6000) {//TODO
             }

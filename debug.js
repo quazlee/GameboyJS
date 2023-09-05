@@ -57,6 +57,8 @@ export class Debug {
         this.backgroundCanvasCtx = this.backgroundCanvas.getContext("2d");
         this.backgroundContainer = document.getElementById("background-container");
         this.toggleBackground.addEventListener("change", this.toggleBackgroundChange.bind(this));
+        this.backgroundCanvasTileMapSource = document.getElementById("background-canvas-tile-map-source");
+        this.backgroundCanvasBackgroundSource = document.getElementById("background-canvas-background-source");
     }
 
     setMemory(memory) {
@@ -348,14 +350,23 @@ export class Debug {
      * Used to draw background and window maps for the debug tools.
      */
     drawBackgroundMaps() {
+        let tileMapSource = Number(this.backgroundCanvasTileMapSource.value);
+        let backgroundSource = Number(this.backgroundCanvasBackgroundSource.value);
         if (this.toggleBackground.checked) {
             this.backgroundCanvasCtx.clearRect(0, 0, this.backgroundCanvasCtx.width, this.backgroundCanvasCtx.height);
             for (let y = 0; y < 32; y++) {
                 for (let x = 0; x < 32; x++) {
-                    let tileNumber = this.memory.readMemory(0x9800 + (x) + (y * 32));
+                    let tileNumber = null;
+                    if(backgroundSource == 0x8000){
+                        tileNumber = this.memory.readMemory(tileMapSource + (x) + (y * 32));
+                    }
+                    else{
+                        tileNumber = twosComplement(this.memory.readMemory(tileMapSource + (x) + (y * 32)));
+                    }
+                    
                     let tileSet = [];
                     for (let i = 0; i < 16; i++) {
-                        tileSet.push(this.memory.readMemory(0x8000 + (tileNumber * 16) + i));
+                        tileSet.push(this.memory.readMemory(backgroundSource + (tileNumber * 16) + i));
                     }
                     let decodedTile = this.ppu.decodeTile(tileSet);
                     this.ppu.drawTile(decodedTile, x * 8, y * 8, this.backgroundCanvasCtx);
