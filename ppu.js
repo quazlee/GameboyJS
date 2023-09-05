@@ -55,6 +55,8 @@ export class Ppu {
         this.backgroundFetchXPos = 0;
         this.firstBackgroundFetch = true;
         this.transparentTilesAdded = 0;
+        this.backgroundPixelsRendered = 0;
+        this.scxOffset = 0;
 
         this.spriteFetchStep = 1;
         this.spriteFetchBuffer = [];
@@ -215,6 +217,7 @@ export class Ppu {
             this.backgroundFetchStep = 1;
             this.backgroundFetchXPos = 0;
             this.firstBackgroundFetch = true;
+            this.scxOffset = 0;
         }
         else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 143) {
             this.mode = 1;
@@ -228,6 +231,7 @@ export class Ppu {
             this.backgroundFetchStep = 1;
             this.backgroundFetchXPos = 0;
             this.firstBackgroundFetch = true;
+            this.scxOffset = 0;
         }
     }
 
@@ -261,6 +265,7 @@ export class Ppu {
         if (this.scanLineTicks == 80) {
             this.fetcherXPos = 0;
             this.mode = 3;
+            this.backgroundPixelsRendered = 0;
         }
     }
 
@@ -310,20 +315,24 @@ export class Ppu {
         if (!this.isFetchingSprite && this.backgroundFetchBuffer.length > 0 && this.renderX * 8 < 160) {
             for (let i = 0; i < 2; i++) {
                 if (this.spriteFetchBuffer.length != 0 && this.spriteFetchBuffer[0] == 0 && this.backgroundFetchBuffer.length != 0) {
-                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx);
                     this.spriteFetchBuffer.shift();
+                    this.backgroundPixelsRendered++;
                 }
                 else if (this.spriteFetchBuffer.length != 0 &&
                     this.backgroundFetchBuffer[0] != 0 && this.spriteFetchBuffer[0] != 0 && this.bgPriority && this.backgroundFetchBuffer.length != 0) {
-                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx);
                     this.spriteFetchBuffer.shift();
+                    this.backgroundPixelsRendered++;
                 }
                 else if (this.spriteFetchBuffer.length != 0 && this.backgroundFetchBuffer.length != 0) {
-                    this.spriteFetchBuffer = this.drawTile2(this.spriteFetchBuffer, this.currentOamTile.xPos - 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+                    this.spriteFetchBuffer = this.drawTile2(this.spriteFetchBuffer, this.currentOamTile.xPos - 8 - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx);
                     this.backgroundFetchBuffer.shift();
+                    this.backgroundPixelsRendered++;
                 }
                 else if (this.spriteFetchBuffer.length == 0 && this.backgroundFetchBuffer.length != 0) {
-                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, this.renderX * 8, (this.memory.io.getData(0x44)), this.viewportCtx);
+                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx);
+                    this.backgroundPixelsRendered++;
                 }
             }
 
@@ -351,7 +360,7 @@ export class Ppu {
                 this.hasWyEqualedLy = true;
             }
 
-            let tileMapBase = 0x9800;
+            
 
 
             //Get the base address for the region of memory to fetch tile data from. Depends on lcdc bit 4.
@@ -360,6 +369,7 @@ export class Ppu {
                 base = 0x8000;
             }
 
+            let tileMapBase = 0x9800;
             if (!this.renderWindow) {
                 if ((lcdc & 0x8) >> 3) {
                     tileMapBase = 0x9C00;
@@ -396,7 +406,7 @@ export class Ppu {
                     this.fetchAddress = address + (2 * (this.windowYOffset % 8));
                 }
             }
-            this.backgroundFetchXPos += 1;
+            
             this.backgroundFetchStep = 2;
         }
         else if (this.backgroundFetchStep == 2) {
@@ -411,10 +421,16 @@ export class Ppu {
             if (this.renderX < 20 && this.backgroundFetchBuffer.length == 0) {
                 this.backgroundFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
                 //TODO SUBTILE SCROLLING
-                // let scx = this.memory.io.getData(0x43);
-                // this.backgroundFetchBuffer.splice(0, scx % 8);
+                if(this.renderX == 0){
+                    
+                    let scx = this.memory.io.getData(0x43);
+                    this.backgroundFetchBuffer.splice(0, scx % 8);
+                    this.scxOffset = scx % 8;
+                }
+
                 this.backgroundFetchStep = 1;
                 this.windowXOffset = 0;
+                this.backgroundFetchXPos += 1;
             }
             else if (this.renderX == 20 && this.backgroundFetchBuffer.length == 0) {
                 this.renderX = 0;
