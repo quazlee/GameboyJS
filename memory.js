@@ -89,7 +89,7 @@ class RomBank {
 
 class RamBank {
     constructor(numBanks) {
-        this.selectedRomBank = 0;
+        this.selectedRamBank = 0;
         this.numBanks = numBanks;
         this.banks = new Array()
         for (let i = 0; i < this.numBanks; i++) {
@@ -98,7 +98,7 @@ class RamBank {
     }
 
     changeBank(bank) {
-        this.selectedRomBank = bank;
+        this.selectedRamBank = bank;
     }
 
     setData(location, value) {
@@ -110,7 +110,7 @@ class RamBank {
                 throw new Error("Location Must Be Between 0 and " + String(8192 - 1));
             }
             else {
-                this.banks[this.selectedRomBank].data[location] = value;
+                this.banks[this.selectedRamBank].data[location] = value;
             }
         }
         catch (e) {
@@ -124,7 +124,7 @@ class RamBank {
                 throw new Error("Location Must Be Between 0 and " + String(this.size - 1));
             }
             else {
-                return this.banks[this.selectedRomBank].data[location];
+                return this.banks[this.selectedRamBank].data[location];
             }
         }
         catch (e) {
@@ -435,14 +435,14 @@ export class Memory {
                 //TODO
                 //need to figure out ram if need bank or not
                 if (this.ramEnabled) {
-                    
+
                 }
             }
             else if (location < 0x8000) {
-                if(value == 0){
+                if (value == 0) {
                     this.bankMode = false;
                 }
-                else if(value == 1){
+                else if (value == 1) {
                     this.bankMode = true;
                 }
             }
@@ -515,6 +515,12 @@ export class Memory {
                 this.romBank.changeBank(value - 1);
             }
             else if (location < 0x6000) {//TODO
+                if (value <= 3) {
+                    this.ram.changeBank(value);
+                }
+                else if (value <= 0xC) {
+
+                }
             }
             else if (location < 0x8000) {//TODO
             }

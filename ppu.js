@@ -260,6 +260,13 @@ export class Ppu {
      * It looks for up to 40 sprites.
      */
     modeTwo() {
+        if(this.scanLineTicks == 0){
+            let ly = this.memory.io.getData(0x44);
+            let wy = this.memory.io.getData(0x4A);
+            if (wy == ly) {
+                this.hasWyEqualedLy = true;
+            }
+        }
         this.oamScan();
         this.scanLineTicks += 2;
         if (this.scanLineTicks == 80) {
@@ -273,6 +280,7 @@ export class Ppu {
      * This mode is where pixels are pushed to the screen.
      */
     modeThree() {
+        this.checkRenderWindow();
         if (!this.isFetchingSprite) {
             this.backgroundFetchCycle();
 
@@ -336,7 +344,7 @@ export class Ppu {
                 }
             }
 
-            this.checkRenderWindow();
+            
             if (this.backgroundFetchBuffer.length == 0) {
                 this.renderX += 1;
             }
@@ -353,15 +361,7 @@ export class Ppu {
             let lcdc = this.memory.io.getData(0x40);
             this.windowEnable = (lcdc & 0x20) >> 4;
 
-            let ly = this.memory.io.getData(0x44);
-            let wy = this.memory.io.getData(0x4A);
-
-            if (wy == ly) {
-                this.hasWyEqualedLy = true;
-            }
-
-            
-
+            let ly = this.memory.io.getData(0x44);        
 
             //Get the base address for the region of memory to fetch tile data from. Depends on lcdc bit 4.
             let base = 0x9000;
@@ -392,9 +392,6 @@ export class Ppu {
                 if ((lcdc & 0x40) >> 6) {
                     tileMapBase = 0x9C00;
                 }
-                this.tileNumber = this.memory.readMemory(tileMapBase + this.windowXOffset + (32 * this.windowYOffset));
-                this.windowXOffset++;
-
                 this.tileNumber = this.memory.readMemory(tileMapBase + this.windowXOffset + (32 * Math.floor(this.windowYOffset / 8)));
 
                 if (base == 0x8000) {
@@ -431,6 +428,9 @@ export class Ppu {
                 this.backgroundFetchStep = 1;
                 this.windowXOffset = 0;
                 this.backgroundFetchXPos += 1;
+                if(this.windowEnable){
+                    this.windowXOffset++;
+                }
             }
             else if (this.renderX == 20 && this.backgroundFetchBuffer.length == 0) {
                 this.renderX = 0;
@@ -483,7 +483,7 @@ export class Ppu {
             this.renderWindow = true;
             this.backgroundFetchStep = 1;
             this.backgroundFetchBuffer = [];
-            this.renderX -= 1;
+            // this.renderX -= 1;
         }
     }
 
