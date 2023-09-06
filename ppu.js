@@ -448,15 +448,9 @@ export class Ppu {
     spriteFetchCycle() {
         switch (this.spriteFetchStep) {
             case 1: {
-                let scy = this.memory.io.getData(0x42);
                 let ly = this.memory.io.getData(0x44);
-                let tileMapYOffset = ((scy + ly) & 0xFF);
                 let address = 0x8000 + (16 * this.currentOamTile.tileIndex);
-                this.fetchAddress = address + (2 * (tileMapYOffset % 8));
-                let spriteSize = ((this.memory.io.getData(0x40) & 0x4) >> 2);
-                if (spriteSize && (this.currentOamTile.oamAddress & 1) == 0 && (tileMapYOffset % 8) == 7) {
-                    this.memory.writeMemory(this.currentOamTile.oamAddress + 2, this.memory.readMemory(this.currentOamTile.oamAddress + 2) + 1);
-                }
+                this.fetchAddress = address + (2 * (ly - (this.currentOamTile.yPos - 16)));
                 this.spriteFetchStep = 2;
                 break;
             }
