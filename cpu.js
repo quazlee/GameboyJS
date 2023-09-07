@@ -22,7 +22,7 @@ export class Cpu {
         this.memory = null;
         this.programCounter = 0x0100;
         this.stackPointer = 0xFFFE;
-        this.gpu = null;
+        this.ppu = null;
         this.debug = null;
         this.sysClock = 0xAB00;
         this.halt = false;
@@ -37,8 +37,8 @@ export class Cpu {
         this.debug = debug;
     }
 
-    setPpu(gpu) {
-        this.gpu = gpu;
+    setPpu(ppu) {
+        this.ppu = ppu;
     }
 
     /**
@@ -1335,7 +1335,7 @@ export class Cpu {
     tickClock(cycles) {
         for (let i = 0; i < cycles; i++) {
             if(i % 2 == 1){
-                this.gpu.cycle();
+                this.ppu.cycle();
             }
 
             //DIV Timer

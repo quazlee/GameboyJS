@@ -10,8 +10,7 @@ export class Ppu {
 
         this.viewport = document.getElementById("viewport-canvas");
         this.viewportCtx = this.viewport.getContext("2d");
-        this.screenWidth = 160;
-        this.screenHeight = 144;
+
         this.colorPalette = ["rgba(255, 255, 255, 1)",
             "rgba(172, 172, 172, 1)",
             "rgba(86, 86, 86, 1)",
@@ -30,11 +29,7 @@ export class Ppu {
         this.oamBuffer = [];
         this.bgPriority = false;
         this.isFetchingSprite = false;
-        this.oamTileNumber = null;
         this.currentOamTile = null;
-
-        this.fetcherXPos = 0; //0-31 tilewise
-        this.fetcherYPos = 0; //0-255 pixelwise
 
         this.renderX = 0; //current x tile coordinate of the renderer 
 
@@ -43,7 +38,7 @@ export class Ppu {
         this.renderWindow = false;
 
         this.windowXOffset = 0; //X coordinate of the current window tile
-        this.windowYOffset = 0;
+        this.windowYOffset = 0; //y coordinate of the current window tile
 
         this.tileNumber = 0;
         this.fetchAddress = 0;
@@ -54,16 +49,12 @@ export class Ppu {
         this.backgroundFetchBuffer = [];
         this.backgroundFetchXPos = 0;
         this.firstBackgroundFetch = true;
-        this.transparentTilesAdded = 0;
         this.backgroundPixelsRendered = 0;
         this.scxOffset = 0;
 
         this.spriteFetchStep = 1;
         this.spriteFetchBuffer = [];
-        this.spritePallete = null;
-
-        this.backgroundOneBase = 0x9800;
-        this.backgroundTwoBase = 0x9C00;
+        this.spritePalette = null;
     }
 
     /**
@@ -108,13 +99,30 @@ export class Ppu {
      * @param {*} tileLow 
      * @returns 
      */
-    decodeTile2(tileHigh, tileLow) {
+    decodeTile2(tileHigh, tileLow, paletteKey) {
         let generatedTile = Array(8);
 
         for (let i = 0; i < 8; i++) {
             let low = (tileHigh & (1 << 7 - i)) >> (7 - i);
             let high = (tileLow & (1 << 7 - i)) >> (7 - i);
-            generatedTile[i] = (this.memory.readMemory(0xFF47) >> 2 * ((high << 1) | low)) & 3;
+            generatedTile[i] = (paletteKey >> 2 * ((high << 1) | low)) & 3;
+        }
+        return generatedTile;
+    }
+
+    decodeTile2Sprite(tileHigh, tileLow, paletteKey) {
+        let generatedTile = Array(8);
+
+        for (let i = 0; i < 8; i++) {
+            let low = (tileHigh & (1 << 7 - i)) >> (7 - i);
+            let high = (tileLow & (1 << 7 - i)) >> (7 - i);
+            if(((high << 1) | low) == 0){
+                generatedTile[i] = 4;
+            }
+            else{
+                generatedTile[i] = (paletteKey >> 2 * ((high << 1) | low)) & 3;
+            }
+            
         }
         return generatedTile;
     }
@@ -130,7 +138,7 @@ export class Ppu {
         for (let y = 0; y < 8; y++) {
             for (let x = 0; x < 8; x++) {
                 let color = tile[y][x];
-                this.drawToCanvas(x + xOffset, y + yOffset, this.backgroundPalette[color], ctx);
+                this.drawToCanvas(x + xOffset, y + yOffset, this.colorPalette[color], ctx);
             }
         }
     }
@@ -142,9 +150,9 @@ export class Ppu {
      * @param {*} yOffset 
      * @param {*} ctx 
      */
-    drawTile2(tile, xOffset, yOffset, ctx, colorPalette) {
+    drawTile2(tile, xOffset, yOffset, ctx) {
         let color = tile[0];
-        this.drawToCanvas(((8 - tile.length) + xOffset), yOffset, colorPalette[color], ctx);
+        this.drawToCanvas(((8 - tile.length) + xOffset), yOffset, this.colorPalette[color], ctx);
         tile.shift();
         return tile;
     }
@@ -253,6 +261,7 @@ export class Ppu {
      * It looks for up to 40 sprites.
      */
     modeTwo() {
+        //Check if the current scanline is where the top of the window layer is.
         if (this.scanLineTicks == 0) {
             let ly = this.memory.io.getData(0x44);
             let wy = this.memory.io.getData(0x4A);
@@ -294,10 +303,6 @@ export class Ppu {
                         this.currentOamTile = this.oamBuffer[i];
                         this.isFetchingSprite = true;
                         this.oamBuffer.splice(i, 1);
-                        // this.transparentTilesAdded = 8 - this.backgroundFetchBuffer.length;
-                        // while(this.backgroundFetchBuffer.length < 8){
-                        //     this.backgroundFetchBuffer.push(0);
-                        // }
                     }
                     i++;
                 }
@@ -307,38 +312,27 @@ export class Ppu {
             this.spriteFetchCycle();
         }
 
-        // if(this.backgroundFetchBuffer.length == 8 && (this.spriteFetchBuffer.length > 0 && this.spriteFetchBuffer.length < 8)){
-        //     while(this.spriteFetchBuffer.length < 8){
-        //         this.spriteFetchBuffer.push(0);
-        //     }
-        // }
-
         if (!this.isFetchingSprite && this.backgroundFetchBuffer.length > 0 && this.renderX * 8 < 160) {
-            if(this.currentOamTile != null && (this.currentOamTile.attributes >> 4) & 1){
-                this.spritePallete = this.spriteTwoPalette;
-            }
-            else{
-                this.spritePallete = this.spriteOnePalette;
-            }
+            let spriteIndexZero = this.spritePalette & 3;
             for (let i = 0; i < 2; i++) {
-                if (this.spriteFetchBuffer.length != 0 && this.spriteFetchBuffer[0] == 0 && this.backgroundFetchBuffer.length != 0) {
-                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx, this.backgroundPalette);
+                if (this.spriteFetchBuffer.length != 0 && this.spriteFetchBuffer[0] == 4 && this.backgroundFetchBuffer.length != 0) {
+                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx);
                     this.spriteFetchBuffer.shift();
                     this.backgroundPixelsRendered++;
                 }
                 else if (this.spriteFetchBuffer.length != 0 &&
-                    this.backgroundFetchBuffer[0] != 0 && this.spriteFetchBuffer[0] != 0 && this.bgPriority && this.backgroundFetchBuffer.length != 0) {
-                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx, this.backgroundPalette);
+                    this.backgroundFetchBuffer[0] != 0 && this.spriteFetchBuffer[0] != 4 && this.bgPriority && this.backgroundFetchBuffer.length != 0) {
+                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx);
                     this.spriteFetchBuffer.shift();
                     this.backgroundPixelsRendered++;
                 }
                 else if (this.spriteFetchBuffer.length != 0 && this.backgroundFetchBuffer.length != 0) {
-                    this.spriteFetchBuffer = this.drawTile2(this.spriteFetchBuffer, this.currentOamTile.xPos - 8 - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx, this.spritePallete);
+                    this.spriteFetchBuffer = this.drawTile2(this.spriteFetchBuffer, this.currentOamTile.xPos - 8 - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx);
                     this.backgroundFetchBuffer.shift();
                     this.backgroundPixelsRendered++;
                 }
                 else if (this.spriteFetchBuffer.length == 0 && this.backgroundFetchBuffer.length != 0) {
-                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx, this.backgroundPalette);
+                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx);
                     this.backgroundPixelsRendered++;
                 }
             }
@@ -417,7 +411,7 @@ export class Ppu {
         }
         else if (this.backgroundFetchStep == 4) {
             if (this.renderX < 20 && this.backgroundFetchBuffer.length == 0) {
-                this.backgroundFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
+                this.backgroundFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow, this.memory.readMemory(0xFF47));
                 //TODO SUBTILE SCROLLING
                 if (this.renderX == 0) {
 
@@ -465,7 +459,13 @@ export class Ppu {
                 break;
             case 4:
                 if (this.backgroundFetchXPos < 20 && this.spriteFetchBuffer.length == 0) {
-                    this.spriteFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow);
+                    if(this.currentOamTile != null && (this.currentOamTile.attributes >> 4) & 1){
+                        this.spritePalette = this.memory.readMemory(0xFF49);
+                    }
+                    else{
+                        this.spritePalette = this.memory.readMemory(0xFF48);
+                    }
+                    this.spriteFetchBuffer = this.decodeTile2Sprite(this.fetchHigh, this.fetchLow, this.spritePalette);
                     if ((this.currentOamTile.attributes & 0x20) >> 5) {
                         this.spriteFetchBuffer.reverse();
                     }
@@ -484,7 +484,6 @@ export class Ppu {
             this.renderWindow = true;
             this.backgroundFetchStep = 1;
             this.backgroundFetchBuffer = [];
-            // this.renderX -= 1;
         }
     }
 
