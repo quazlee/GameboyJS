@@ -121,11 +121,11 @@ export class Debug {
      * @param {cpu} cpu 
      */
     debugRomOutput(cpu) {
-        if (cpu.memory.readMemory(0xFF02) == 0x0081) {
+        if (this.memory.readMemory(0xFF02) == 0x0081) {
             let debugElement = document.getElementById("blargg");
-            let nextCharacter = cpu.memory.readMemory(0xFF01);
+            let nextCharacter = this.memory.readMemory(0xFF01);
             this.blarggString = this.blarggString + String.fromCharCode(nextCharacter);
-            cpu.memory.writeMemory(0xFF02, 0x0);
+            this.memory.writeMemory(0xFF02, 0x0);
             // debugElement.value =  debugElement.value + String.fromCharCode(nextCharacter);
             // console.log(nextCharacter);
         }

@@ -39,6 +39,12 @@ class MemoryBlock {
             errorHandler(e);
         }
     }
+
+    loadState(state){
+        for (let i = 0; i < this.size; i++) {
+            this.data[i] = state.data[i];
+        }
+    }
 }
 
 class RomBank {
@@ -83,6 +89,14 @@ class RomBank {
         }
         catch (e) {
             errorHandler(e);
+        }
+    }
+
+    loadState(state){
+        this.numBanks = state.numBanks;
+        this.currentBank = state.currentBank;
+        for (let i = 0; i < this.numBanks; i++) {
+            this.banks[i] =  state.banks[i];
         }
     }
 }
@@ -131,12 +145,19 @@ class RamBank {
             errorHandler(e);
         }
     }
+
+    loadState(state){
+        this.numBanks = state.numBanks;
+        this.currentBank = state.currentBank;
+        for (let i = 0; i < this.numBanks; i++) {
+            this.banks[i] =  state.banks[i];
+        }
+    }
 }
 
-export class Memory {
-    constructor(romInput) {
-        this.cpu = null;
-        this.romInput = null;
+class Memory {
+
+    constructor(){
         this.mbcType = null;
         this.numRomBanks = null;
         this.ramEnabled = null;
@@ -176,6 +197,30 @@ export class Memory {
 
         /** 0xFFFF */
         this.ie = null;
+    }
+
+    loadState(state){
+        this.mbcType = state.mbcType;
+        this.numRomBanks = state.numRomBanks;
+        this.ramEnabled = state.ramEnabled;
+        this.bankMode = state.bankMode;
+        this.romZero.loadState(state.romZero);
+        this.romBank.loadState(state.romBank);
+        this.vram.loadState(state.vram);
+        this.ram.loadState(state.ram);
+        this.wram.loadState(state.wram);
+        this.oam.loadState(state.oam);
+        this.io.loadState(state.io);
+        this.hram.loadState(state.hram);
+        this.ie.loadState(state.ie);
+    }
+}
+
+export class MemoryManager {
+    constructor(romInput) {
+        this.cpu = null;
+        this.romInput = null;
+        this.memory = new Memory();
 
     }
 
@@ -186,76 +231,76 @@ export class Memory {
     initialize(romInput) {
         this.romInput = romInput;
 
-        this.mbcType = this.romInput[0x147]
+        this.memory.mbcType = this.romInput[0x147]
 
         let romSize = this.romInput[0x148];
-        this.numRomBanks = (2 ** (romSize + 1));
+        this.memory.numRomBanks = (2 ** (romSize + 1));
 
         let ramSize = this.romInput[0x149];
         switch (ramSize) {
             case 0:
-                this.numRamBanks = 0;
+                this.memory.numRamBanks = 0;
                 break;
             case 2:
-                this.numRamBanks = 1;
+                this.memory.numRamBanks = 1;
                 break;
             case 3:
-                this.numRamBanks = 4;
+                this.memory.numRamBanks = 4;
                 break;
             case 4:
-                this.numRamBanks = 16;
+                this.memory.numRamBanks = 16;
                 break;
             case 5:
-                this.numRamBanks = 8;
+                this.memory.numRamBanks = 8;
                 break;
         }
 
-        this.ramEnabled = false;
-        this.bankMode = false;
+        this.memory.ramEnabled = false;
+        this.memory.bankMode = false;
 
         /** 0x0000-0x3FFF */
-        this.romZero = new MemoryBlock(16384);
+        this.memory.romZero = new MemoryBlock(16384);
 
         /** 0x4000-0x7FFF */
-        this.romBank = new RomBank(this.numRomBanks);
+        this.memory.romBank = new RomBank(this.memory.numRomBanks);
 
         /** 0x8000-0x9FFF */
-        this.vram = new MemoryBlock(8192);
+        this.memory.vram = new MemoryBlock(8192);
 
         /** 0xA000-0xBFFF */
-        this.ram = new RamBank(this.numRamBanks);
+        this.memory.ram = new RamBank(this.memory.numRamBanks);
 
         /** 0xC000-0xDFFF */
-        this.wram = new MemoryBlock(8192);
+        this.memory.wram = new MemoryBlock(8192);
 
         /** 0xE000-0xFDFF
          * ECHO RAM SO IGNORE IT
         */
-        this.echoRam = new MemoryBlock(7680);
+        this.memory.echoRam = new MemoryBlock(7680);
 
         /** 0xFE00-0xFE9F */
-        this.oam = new MemoryBlock(160);
+        this.memory.oam = new MemoryBlock(160);
 
         /** 0xFEA0-0xFEFF
          * NOT USABLE SO IGNORE IT
         */
-        this.prohibited = new MemoryBlock(96)
+        this.memory.prohibited = new MemoryBlock(96)
 
         /** 0xFF00-0xFF7F */
-        this.io = new MemoryBlock(128);
+        this.memory.io = new MemoryBlock(128);
 
         /** 0xFF80-0xFFFE */
-        this.hram = new MemoryBlock(127);
+        this.memory.hram = new MemoryBlock(127);
 
         /** 0xFFFF */
-        this.ie = new MemoryBlock(1);
+        this.memory.ie = new MemoryBlock(1);
 
         this.readRom();
 
         this.writeMemory(0xFF00, 0xCF);
         this.writeMemory(0xFF01, 0x00);
         this.writeMemory(0xFF02, 0x7E);
-        this.io.setData(4, 0xAB);
+        this.memory.io.setData(4, 0xAB);
         this.writeMemory(0xFF05, 0x00);
         this.writeMemory(0xFF06, 0x00);
         this.writeMemory(0xFF07, 0xF8);
@@ -288,7 +333,7 @@ export class Memory {
         this.writeMemory(0xFF44, 0x00);
         this.writeMemory(0xFF45, 0x00);
         // this.writeMemory(0xFF46, 0xFF);
-        this.io.setData(0x46, 0xFF)
+        this.memory.io.setData(0x46, 0xFF)
         this.writeMemory(0xFF47, 0xFC);
         this.writeMemory(0xFF48, 0x00);
         this.writeMemory(0xFF49, 0x00);
@@ -313,27 +358,27 @@ export class Memory {
     readMemory(location) {
         try {
             if (location < 0x4000)
-                return this.romZero.getData(location);
+                return this.memory.romZero.getData(location);
             else if (location < 0x8000)
-                return this.romBank.getData(location - 0x4000)
+                return this.memory.romBank.getData(location - 0x4000)
             else if (location < 0xA000)
-                return this.vram.getData(location - 0x8000);
+                return this.memory.vram.getData(location - 0x8000);
             else if (location < 0xC000)
-                return this.ram.getData(location - 0xA000);
+                return this.memory.ram.getData(location - 0xA000);
             else if (location < 0xE000)
-                return this.wram.getData(location - 0xC000);
+                return this.memory.wram.getData(location - 0xC000);
             else if (location < 0xFE00)
-                return this.echoRam.getData(location - 0xE000);
+                return this.memory.echoRam.getData(location - 0xE000);
             else if (location < 0xFEA0)
-                return this.oam.getData(location - 0xFE00);
+                return this.memory.oam.getData(location - 0xFE00);
             else if (location < 0xFF00)
-                return this.prohibited.getData(location - 0xFEA0);
+                return this.memory.prohibited.getData(location - 0xFEA0);
             else if (location < 0xFF80)
-                return this.io.getData(location - 0xFF00);
+                return this.memory.io.getData(location - 0xFF00);
             else if (location < 0xFFFF)
-                return this.hram.getData(location - 0xFF80);
+                return this.memory.hram.getData(location - 0xFF80);
             else if (location == 0xFFFF)
-                return this.ie.getData(0);
+                return this.memory.ie.getData(0);
             else
                 return 0;
         }
@@ -343,7 +388,7 @@ export class Memory {
     }
 
     writeMemory(location, value) {
-        switch (this.mbcType) {
+        switch (this.memory.mbcType) {
             case 0://No MBC
                 this.writeMemoryMbcZero(location, value);
                 break;
@@ -365,41 +410,41 @@ export class Memory {
                 throw new Error("Invalid Location: Tried Writing to ROM");
             }
             else if (location < 0xA000) {
-                this.vram.setData(location - 0x8000, value);
+                this.memory.vram.setData(location - 0x8000, value);
             }
             else if (location < 0xC000) {
-                this.ram.setData(location - 0xA000, value);
+                this.memory.ram.setData(location - 0xA000, value);
             }
             else if (location < 0xE000) {
-                this.wram.setData(location - 0xC000, value);
+                this.memory.wram.setData(location - 0xC000, value);
             }
             else if (location < 0xFE00)
-                return this.echoRam.setData(location - 0xE000, value);
+                return this.memory.echoRam.setData(location - 0xE000, value);
             else if (location < 0xFEA0) {
-                this.oam.setData(location - 0xFE00, value);
+                this.memory.oam.setData(location - 0xFE00, value);
             }
             else if (location < 0xFF00)
-                return this.prohibited.setData(location - 0xFEA0, value);
+                return this.memory.prohibited.setData(location - 0xFEA0, value);
             else if (location < 0xFF80) {
                 if (location == 0xFF04) { //RESET TIMA
-                    this.io.setData(location - 0xFF00, 0);
+                    this.memory.io.setData(location - 0xFF00, 0);
                 }
                 else if (location == 0xFF46) { //OAM DMA
-                    this.io.setData(location - 0xFF00, value);
+                    this.memory.io.setData(location - 0xFF00, value);
                     for (let i = 0; i < 160; i++) {
-                        this.oam.setData(i, this.readMemory((value << 8) | i));
+                        this.memory.oam.setData(i, this.readMemory((value << 8) | i));
                         this.cpu.tickClock(1)
                     }
                 }
                 else {
-                    this.io.setData(location - 0xFF00, value);
+                    this.memory.io.setData(location - 0xFF00, value);
                 }
             }
             else if (location < 0xFFFF) {
-                this.hram.setData(location - 0xFF80, value);
+                this.memory.hram.setData(location - 0xFF80, value);
             }
             else if (location == 0xFFFF) {
-                this.ie.setData(0, value);
+                this.memory.ie.setData(0, value);
             }
             else {
                 throw new Error("Invalid Location: OUT OF BOUNDS");
@@ -415,10 +460,10 @@ export class Memory {
             if (location < 0x2000) { //Any write to here will enable RAM if the value has a lower nibble of 0xA                let low = value | 0xF;
                 let low = value | 0xF;
                 if (low == 0xA) {
-                    this.ramEnabled = true;
+                    this.memory.ramEnabled = true;
                 }
                 else {
-                    this.ramEnabled = false;
+                    this.memory.ramEnabled = false;
                 }
             }
             else if (location < 0x4000) { //Writing to here will change the active ROM Bank 
@@ -429,61 +474,61 @@ export class Memory {
                         maskedValue = 1;
                         break;
                 }
-                this.romBank.changeBank(value - 1);
+                this.memory.romBank.changeBank(value - 1);
             }
             else if (location < 0x6000) {
                 //TODO
                 //need to figure out ram if need bank or not
-                if (this.ramEnabled) {
+                if (this.memory.ramEnabled) {
 
                 }
             }
             else if (location < 0x8000) {
                 if (value == 0) {
-                    this.bankMode = false;
+                    this.memory.bankMode = false;
                 }
                 else if (value == 1) {
-                    this.bankMode = true;
+                    this.memory.bankMode = true;
                 }
             }
             else if (location < 0xA000) {
-                this.vram.setData(location - 0x8000, value);
+                this.memory.vram.setData(location - 0x8000, value);
             }
             else if (location < 0xC000) {
-                if (this.ramEnabled) {
-                    this.ram.setData(location - 0xA000, value);
+                if (this.memory.ramEnabled) {
+                    this.memory.ram.setData(location - 0xA000, value);
                 }
             }
             else if (location < 0xE000) {
-                this.wram.setData(location - 0xC000, value);
+                this.memory.wram.setData(location - 0xC000, value);
             }
             else if (location < 0xFE00)
-                return this.echoRam.setData(location - 0xE000, value);
+                return this.memory.echoRam.setData(location - 0xE000, value);
             else if (location < 0xFEA0) {
-                this.oam.setData(location - 0xFE00, value);
+                this.memory.oam.setData(location - 0xFE00, value);
             }
             else if (location < 0xFF00)
-                return this.prohibited.setData(location - 0xFEA0, value);
+                return this.memory.prohibited.setData(location - 0xFEA0, value);
             else if (location < 0xFF80) {
                 if (location == 0xFF04) {
-                    this.io.setData(location - 0xFF00, 0);
+                    this.memory.io.setData(location - 0xFF00, 0);
                 }
                 else if (location == 0xFF46) { //OAM DMA
-                    this.io.setData(location - 0xFF00, value);
+                    this.memory.io.setData(location - 0xFF00, value);
                     for (let i = 0; i < 160; i++) {
-                        this.oam.setData(i, this.readMemory((value << 8) | i));
+                        this.memory.oam.setData(i, this.readMemory((value << 8) | i));
                         this.cpu.tickClock(1)
                     }
                 }
                 else {
-                    this.io.setData(location - 0xFF00, value);
+                    this.memory.io.setData(location - 0xFF00, value);
                 }
             }
             else if (location < 0xFFFF) {
-                this.hram.setData(location - 0xFF80, value);
+                this.memory.hram.setData(location - 0xFF80, value);
             }
             else if (location == 0xFFFF) {
-                this.ie.setData(0, value);
+                this.memory.ie.setData(0, value);
             }
             else {
                 throw new Error("Invalid Location: OUT OF BOUNDS");
@@ -499,10 +544,10 @@ export class Memory {
             if (location < 0x2000) {//RAM enable and Timer Enable
                 let low = value | 0xF;
                 if (low == 0xA) {
-                    this.ramEnabled = true;
+                    this.memory.ramEnabled = true;
                 }
                 else {
-                    this.ramEnabled = false;
+                    this.memory.ramEnabled = false;
                 }
             }
             else if (location < 0x4000) {//TODO
@@ -512,11 +557,11 @@ export class Memory {
                         maskedValue = 1;
                         break;
                 }
-                this.romBank.changeBank(value - 1);
+                this.memory.romBank.changeBank(value - 1);
             }
             else if (location < 0x6000) {//TODO
                 if (value <= 3) {
-                    this.ram.changeBank(value);
+                    this.memory.ram.changeBank(value);
                 }
                 else if (value <= 0xC) {
 
@@ -525,43 +570,43 @@ export class Memory {
             else if (location < 0x8000) {//TODO
             }
             else if (location < 0xA000) {
-                this.vram.setData(location - 0x8000, value);
+                this.memory.vram.setData(location - 0x8000, value);
             }
             else if (location < 0xC000) {//TODO
-                if (this.ramEnabled) {
-                    this.ram.setData(location - 0xA000, value);
+                if (this.memory.ramEnabled) {
+                    this.memory.ram.setData(location - 0xA000, value);
                 }
             }
             else if (location < 0xE000) {
-                this.wram.setData(location - 0xC000, value);
+                this.memory.wram.setData(location - 0xC000, value);
             }
             else if (location < 0xFE00)
-                return this.echoRam.setData(location - 0xE000, value);
+                return this.memory.echoRam.setData(location - 0xE000, value);
             else if (location < 0xFEA0) {
-                this.oam.setData(location - 0xFE00, value);
+                this.memory.oam.setData(location - 0xFE00, value);
             }
             else if (location < 0xFF00)
-                return this.prohibited.setData(location - 0xFEA0, value);
+                return this.memory.prohibited.setData(location - 0xFEA0, value);
             else if (location < 0xFF80) {
                 if (location == 0xFF04) {
-                    this.io.setData(location - 0xFF00, 0);
+                    this.memory.io.setData(location - 0xFF00, 0);
                 }
                 else if (location == 0xFF46) { //OAM DMA
-                    this.io.setData(location - 0xFF00, value);
+                    this.memory.io.setData(location - 0xFF00, value);
                     for (let i = 0; i < 160; i++) {
-                        this.oam.setData(i, this.readMemory((value << 8) | i));
+                        this.memory.oam.setData(i, this.readMemory((value << 8) | i));
                         this.cpu.tickClock(1)
                     }
                 }
                 else {
-                    this.io.setData(location - 0xFF00, value);
+                    this.memory.io.setData(location - 0xFF00, value);
                 }
             }
             else if (location < 0xFFFF) {
-                this.hram.setData(location - 0xFF80, value);
+                this.memory.hram.setData(location - 0xFF80, value);
             }
             else if (location == 0xFFFF) {
-                this.ie.setData(0, value);
+                this.memory.ie.setData(0, value);
             }
             else {
                 throw new Error("Invalid Location: OUT OF BOUNDS");
@@ -577,22 +622,22 @@ export class Memory {
         let currentBankIndex = 0;
         let currentBank = 0;
         while (romArrayIndex < 16384) {
-            this.romZero.setData(romArrayIndex, this.romInput[romArrayIndex]);
+            this.memory.romZero.setData(romArrayIndex, this.romInput[romArrayIndex]);
             romArrayIndex++;
         }
         while (romArrayIndex < this.romInput.length - 1) {
             if (currentBankIndex == 16384) {
                 currentBankIndex = 0;
                 currentBank++;
-                this.romBank.changeBank(currentBank);
+                this.memory.romBank.changeBank(currentBank);
             }
-            this.romBank.setData(currentBankIndex, this.romInput[romArrayIndex]);
+            this.memory.romBank.setData(currentBankIndex, this.romInput[romArrayIndex]);
             currentBankIndex++;
 
             romArrayIndex++;
 
 
         }
-        this.romBank.changeBank(0);
+        this.memory.romBank.changeBank(0);
     }
 }

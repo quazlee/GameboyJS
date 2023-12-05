@@ -22,6 +22,7 @@ async function startGameboy() {
     let rom = this.files[0];
     let romInput = await readRom(rom);
     gameboy.initialize(romInput);
+    gameboy.setGameName(rom.name.replace(".gb", ""))
 
     setInterval(gameboy.mainLoop.bind(gameboy), 17);
 }

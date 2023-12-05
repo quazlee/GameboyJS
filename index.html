@@ -25,13 +25,23 @@
 
         <input type="file" id="romInput" accept=".gb" autocomplete="off">
 
+        <select name="save-state-number" id="save-state-number">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+        </select>
+        <input type="button" id="save-state" value="Save State">
+        <input type="button" id="load-state" value="Load State">
+
         <div id="debug-checkbox">
             <input type="checkbox" name="is-debug" id="is-debug" autocomplete="off">
             <label for="is-debug">View Debug Tools</label>
         </div>
 
         <div id="debug-tools-container">
-            
+
 
             <div class="debug-tool" id="debug-options">
                 <div class="multiselect">
@@ -109,21 +119,21 @@
 
 
             <div class="debug-tool" id="tile-map-container">
-                <div class="canvas-wrapper" >
+                <div class="canvas-wrapper">
                     <canvas id="tile-map-canvas" width="128" height="192"></canvas>
                 </div>
             </div>
             <div class="debug-tool" id="background-container">
-                <div class="canvas-wrapper" >
+                <div class="canvas-wrapper">
                     <canvas id="background-canvas" width="256" height="256"></canvas>
                 </div>
-                
+
                 <div id="background-canvas-controls">
                     <select id="background-canvas-tile-map-source">
                         <option value="0x9800">0x9800</option>
                         <option value="0x9C00">0x9C00</option>
                     </select>
-                    <select id="background-canvas-background-source"> 
+                    <select id="background-canvas-background-source">
                         <option value="0x8000">0x8000</option>
                         <option value="0x9000">0x8800</option>
                     </select>

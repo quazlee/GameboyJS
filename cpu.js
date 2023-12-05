@@ -1,5 +1,5 @@
 import { RegisterCollection } from "./registercollection.js"
-import { Memory } from "./memory.js";
+import { MemoryManager } from "./memory.js";
 import { twosComplement } from "./utility.js";
 import { Ppu } from "./ppu.js";
 import { errorHandler } from "./errorhandler.js";
@@ -19,7 +19,7 @@ const registerID = {
 export class Cpu {
     constructor() {
         this.registers = new RegisterCollection();
-        this.memory = null;
+        this.memoryController = null;
         this.programCounter = 0x0100;
         this.stackPointer = 0xFFFE;
         this.ppu = null;
@@ -30,7 +30,7 @@ export class Cpu {
     }
 
     setMemory(memory) {
-        this.memory = memory;
+        this.memoryController = memory;
     }
 
     setDebug(debug) {
@@ -46,7 +46,7 @@ export class Cpu {
      * @returns the next byte of data from the ROM at the location of the programcounter.
      */
     fetch() {
-        let currentOpcode = this.memory.readMemory(this.programCounter);
+        let currentOpcode = this.memoryController.readMemory(this.programCounter);
         this.programCounter++;
         return currentOpcode;
     }
@@ -76,20 +76,20 @@ export class Cpu {
      * Checks for requested Interrupts at the start of every CPU cycle.
      */
     interrupt() {
-        if (this.ime && this.memory.readMemory(0xFFFF)) {
-            if (this.memory.readMemory(0xFFFF) & 1 && this.memory.readMemory(0xFF0F) & 1) {
+        if (this.ime && this.memoryController.readMemory(0xFFFF)) {
+            if (this.memoryController.readMemory(0xFFFF) & 1 && this.memoryController.readMemory(0xFF0F) & 1) {
                 this.interruptJump(0x40, 0);
             }
-            if (this.memory.readMemory(0xFFFF) & 2 && this.memory.readMemory(0xFF0F) & 2) {
+            if (this.memoryController.readMemory(0xFFFF) & 2 && this.memoryController.readMemory(0xFF0F) & 2) {
                 this.interruptJump(0x48, 1);
             }
-            if (this.memory.readMemory(0xFFFF) & 4 && this.memory.readMemory(0xFF0F) & 4) {
+            if (this.memoryController.readMemory(0xFFFF) & 4 && this.memoryController.readMemory(0xFF0F) & 4) {
                 this.interruptJump(0x50, 2);
             }
-            if (this.memory.readMemory(0xFFFF) & 8 && this.memory.readMemory(0xFF0F) & 8) {
+            if (this.memoryController.readMemory(0xFFFF) & 8 && this.memoryController.readMemory(0xFF0F) & 8) {
                 this.interruptJump(0x58, 3);
             }
-            if (this.memory.readMemory(0xFFFF) & 16 && this.memory.readMemory(0xFF0F) & 16) {
+            if (this.memoryController.readMemory(0xFFFF) & 16 && this.memoryController.readMemory(0xFF0F) & 16) {
                 this.interruptJump(0x60, 4);
             }
         }
@@ -97,11 +97,11 @@ export class Cpu {
 
     interruptJump (location, bit){
         this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-        this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
+        this.memoryController.writeMemory(this.stackPointer, (this.programCounter >> 8));
         this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-        this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
+        this.memoryController.writeMemory(this.stackPointer, (this.programCounter & 0xff));
         this.programCounter = location;
-        this.memory.writeMemory(0xFF0F, this.memory.readMemory(0xFF0F) & ~(1 << bit));
+        this.memoryController.writeMemory(0xFF0F, this.memoryController.readMemory(0xFF0F) & ~(1 << bit));
         this.tickClock(20);
     }
 
@@ -131,7 +131,7 @@ export class Cpu {
                             {
                                 let location = this.registers.getRegisterDouble(registerID.B, registerID.C);
                                 let value = this.registers.getRegister(registerID.A);
-                                this.memory.writeMemory(location, value);
+                                this.memoryController.writeMemory(location, value);
                                 this.tickClock(8);
                                 break;
                             }
@@ -172,8 +172,8 @@ export class Cpu {
                                 let location = (high << 8) | low;
                                 let lowStack = this.stackPointer & 0xFF;
                                 let highStack = this.stackPointer >> 8;
-                                this.memory.writeMemory(location, lowStack);
-                                this.memory.writeMemory(location + 1, highStack);
+                                this.memoryController.writeMemory(location, lowStack);
+                                this.memoryController.writeMemory(location + 1, highStack);
                                 this.tickClock(20);
                                 break;
                             }
@@ -185,7 +185,7 @@ export class Cpu {
                             }
                         case 0xA:
                             {
-                                let value = this.memory.readMemory(this.registers.getRegisterDouble(registerID.B, registerID.C));
+                                let value = this.memoryController.readMemory(this.registers.getRegisterDouble(registerID.B, registerID.C));
                                 this.registers.setRegister(registerID.A, value);
                                 this.tickClock(8);
                                 break;
@@ -238,7 +238,7 @@ export class Cpu {
                             {
                                 let location = this.registers.getRegisterDouble(registerID.D, registerID.E);
                                 let value = this.registers.getRegister(registerID.A);
-                                this.memory.writeMemory(location, value);
+                                this.memoryController.writeMemory(location, value);
                                 this.tickClock(8);
                                 break;
                             }
@@ -287,7 +287,7 @@ export class Cpu {
                             }
                         case 0xA:
                             {
-                                let value = this.memory.readMemory(this.registers.getRegisterDouble(registerID.D, registerID.E));
+                                let value = this.memoryController.readMemory(this.registers.getRegisterDouble(registerID.D, registerID.E));
                                 this.registers.setRegister(registerID.A, value);
                                 this.tickClock(8);
                                 break;
@@ -330,10 +330,10 @@ export class Cpu {
                         case 0x2:
                             {
                                 let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                                this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                                this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                                 let value = this.registers.getRegister(registerID.A);
                                 this.registers.setRegister(registerID.HL, value);
-                                this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                                this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                                 this.registers.incRegisterDouble(registerID.H, registerID.L);
                                 this.tickClock(8);
                                 break;
@@ -416,7 +416,7 @@ export class Cpu {
                         case 0xA:
                             {
                                 let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                                this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                                this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                                 let value = this.registers.getRegister(registerID.HL);
                                 this.registers.incRegisterDouble(registerID.H, registerID.L);
                                 this.registers.setRegister(registerID.A, value);
@@ -468,10 +468,10 @@ export class Cpu {
                         case 0x2:
                             {
                                 let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                                this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                                this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                                 let value = this.registers.getRegister(registerID.A);
                                 this.registers.setRegister(registerID.HL, value);
-                                this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                                this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                                 this.registers.decRegisterDouble(registerID.H, registerID.L);
                                 this.tickClock(8);
                                 break;
@@ -483,18 +483,18 @@ export class Cpu {
                         case 0x4:
                             {
                                 let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                                this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                                this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                                 this.registers.incRegister(registerID.HL);
-                                this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                                this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                                 this.tickClock(12);
                                 break;
                             }
                         case 0x5:
                             {
                                 let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                                this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                                this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                                 this.registers.decRegister(registerID.HL);
-                                this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                                this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                                 this.tickClock(12);
                                 break;
                             }
@@ -502,7 +502,7 @@ export class Cpu {
                             {
                                 let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
                                 this.registers.setRegister(registerID.HL, this.fetch());
-                                this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                                this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                                 this.tickClock(12);
                                 break;
                             }
@@ -524,7 +524,7 @@ export class Cpu {
                         case 0xA:
                             {
                                 let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                                this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                                this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                                 let value = this.registers.getRegister(registerID.HL);
                                 this.registers.decRegisterDouble(registerID.H, registerID.L);
                                 this.registers.setRegister(registerID.A, value);
@@ -570,13 +570,13 @@ export class Cpu {
                 case 0x4:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.ldXY(registerID.B, low);
 
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.ldXY(registerID.C, low - 8);
                     }
                     else if (low < 8) {
@@ -589,12 +589,12 @@ export class Cpu {
                 case 0x5:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.ldXY(registerID.D, low);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.ldXY(registerID.E, low - 8);
                     }
                     else if (low < 8) {
@@ -607,12 +607,12 @@ export class Cpu {
                 case 0x6:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.ldXY(registerID.H, low);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.ldXY(registerID.L, low - 8);
                     }
                     else if (low < 8) {
@@ -625,7 +625,7 @@ export class Cpu {
                 case 0x7:
                     if (low == 0x6) {
                         //This is the Halt Bug. Causes the next instruction to repeat.
-                        if(this.ime == 0 && (this.memory.readMemory(0xFFFF) & this.memory.readMemory(0xFF0F)) != 0){
+                        if(this.ime == 0 && (this.memoryController.readMemory(0xFFFF) & this.memoryController.readMemory(0xFF0F)) != 0){
                             this.tickClock(4);
                             let nextPC = this.programCounter;
 
@@ -640,7 +640,7 @@ export class Cpu {
 
                         //This is true Halt Behavior. 
                         while(this.halt){
-                            if((this.memory.readMemory(0xFFFF) & this.memory.readMemory(0xFF0F)) != 0){
+                            if((this.memoryController.readMemory(0xFFFF) & this.memoryController.readMemory(0xFF0F)) != 0){
                                 this.halt = false;
                             }
                             this.tickClock(4);
@@ -648,14 +648,14 @@ export class Cpu {
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.ldXY(registerID.A, low - 8);
                     }
                     else if (low < 8) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.setRegister(registerID.HL, this.registers.getRegister(low));
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                         this.tickClock(8);
                     }
                     else {
@@ -665,13 +665,13 @@ export class Cpu {
                 case 0x8:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.addA(this.registers.getRegister(low));
                         this.tickClock(8);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.adcA(this.registers.getRegister(low - 8));
                         this.tickClock(8);
                     }
@@ -687,13 +687,13 @@ export class Cpu {
                 case 0x9:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.subA(this.registers.getRegister(low));
                         this.tickClock(8);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.sbcA(this.registers.getRegister(low - 8));
                         this.tickClock(8);
                     }
@@ -709,13 +709,13 @@ export class Cpu {
                 case 0xA:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.andA(this.registers.getRegister(low));
                         this.tickClock(8);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.xorA(this.registers.getRegister(low - 8));
                         this.tickClock(8);
                     }
@@ -731,13 +731,13 @@ export class Cpu {
                 case 0xB:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.orA(this.registers.getRegister(low));
                         this.tickClock(8);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.cpA(this.registers.getRegister(low - 8));
                         this.tickClock(8);
                     }
@@ -781,9 +781,9 @@ export class Cpu {
                             this.returnConditional(this.registers.getFlag(7));
                             break;
                         case 0x9:
-                            let low = this.memory.readMemory(this.stackPointer);
+                            let low = this.memoryController.readMemory(this.stackPointer);
                             this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
-                            let high = this.memory.readMemory(this.stackPointer);
+                            let high = this.memoryController.readMemory(this.stackPointer);
                             this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
                             this.programCounter = (high << 8) | low;
                             this.tickClock(16);
@@ -835,12 +835,12 @@ export class Cpu {
                             break;
                         case 0x9:
                             {
-                                let low = this.memory.readMemory(this.stackPointer);
+                                let low = this.memoryController.readMemory(this.stackPointer);
                                 this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
-                                let high = this.memory.readMemory(this.stackPointer);
+                                let high = this.memoryController.readMemory(this.stackPointer);
                                 this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
                                 this.programCounter = (high << 8) | low;
-                                this.memory.writeMemory(0xFFFF, 1);
+                                this.memoryController.writeMemory(0xFFFF, 1);
                                 this.tickClock(16);
                                 break;
                             }
@@ -862,14 +862,14 @@ export class Cpu {
                 case 0xE:
                     switch (low) {
                         case 0x0:
-                            this.memory.writeMemory((0xFF00 + this.fetch()), this.registers.getRegister(registerID.A));
+                            this.memoryController.writeMemory((0xFF00 + this.fetch()), this.registers.getRegister(registerID.A));
                             this.tickClock(12);
                             break;
                         case 0x1:
                             this.pop(registerID.H, registerID.L);
                             break;
                         case 0x2:
-                            this.memory.writeMemory((0xFF00 + this.registers.getRegister(registerID.C)), this.registers.getRegister(registerID.A));
+                            this.memoryController.writeMemory((0xFF00 + this.registers.getRegister(registerID.C)), this.registers.getRegister(registerID.A));
                             this.tickClock(12);
                             break;
                         case 0x5:
@@ -908,7 +908,7 @@ export class Cpu {
                             {
                                 let low = this.fetch();
                                 let high = this.fetch()
-                                this.memory.writeMemory(((high << 8) | low), this.registers.getRegister(registerID.A));
+                                this.memoryController.writeMemory(((high << 8) | low), this.registers.getRegister(registerID.A));
                                 this.tickClock(16);
                                 break;
                             }
@@ -924,14 +924,14 @@ export class Cpu {
                 case 0xF:
                     switch (low) {
                         case 0x0:
-                            this.registers.setRegister(registerID.A, this.memory.readMemory(0xFF00 + this.fetch()));
+                            this.registers.setRegister(registerID.A, this.memoryController.readMemory(0xFF00 + this.fetch()));
                             this.tickClock(12);
                             break;
                         case 0x1:
                             this.pop(registerID.A, registerID.F);
                             break;
                         case 0x2:
-                            this.registers.setRegister(registerID.A, this.memory.readMemory(0xFF00 + this.registers.getRegister(registerID.C)));
+                            this.registers.setRegister(registerID.A, this.memoryController.readMemory(0xFF00 + this.registers.getRegister(registerID.C)));
                             this.tickClock(8);
                             break;
                         case 0x3:
@@ -976,7 +976,7 @@ export class Cpu {
                             {
                                 let low = this.fetch();
                                 let high = this.fetch();
-                                let value = this.memory.readMemory((high << 8) | low);
+                                let value = this.memoryController.readMemory((high << 8) | low);
                                 this.registers.setRegister(registerID.A, value);
                                 this.tickClock(16);
                                 break;
@@ -1001,16 +1001,16 @@ export class Cpu {
                 case 0x0:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.rotateLeftCircular(low);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                         this.tickClock(16);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.rotateRightCircular(low - 8);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                         this.tickClock(16);
                     }
                     else if (low < 8) {
@@ -1026,16 +1026,16 @@ export class Cpu {
                 case 0x1:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.rotateLeft(low);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                         this.tickClock(16);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.rotateRight(low - 8);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                         this.tickClock(16);
                     }
                     else if (low < 8) {
@@ -1050,16 +1050,16 @@ export class Cpu {
                 case 0x2:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.SLA(low);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                         this.tickClock(16);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.SRA(low - 8);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                         this.tickClock(16);
                     }
                     else if (low < 8) {
@@ -1074,16 +1074,16 @@ export class Cpu {
                 case 0x3:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.swap(low);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                         this.tickClock(16);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.registers.SRL(low - 8);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                         this.tickClock(16);
                     }
                     else if (low < 8) {
@@ -1099,12 +1099,12 @@ export class Cpu {
                 case 0x4:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.bit(0, low);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.bit(1, low - 8);
                     }
                     else if (low < 8) {
@@ -1117,12 +1117,12 @@ export class Cpu {
                 case 0x5:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.bit(2, low);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.bit(3, low - 8);
                     }
                     else if (low < 8) {
@@ -1135,12 +1135,12 @@ export class Cpu {
                 case 0x6:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.bit(4, low);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.bit(5, low - 8);
                     }
                     else if (low < 8) {
@@ -1153,12 +1153,12 @@ export class Cpu {
                 case 0x7:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.bit(6, low);
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.bit(7, low - 8);
                     }
                     else if (low < 8) {
@@ -1171,15 +1171,15 @@ export class Cpu {
                 case 0x8:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.res(0, low);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.res(1, low - 8);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low < 8) {
                         this.res(0, low);
@@ -1191,15 +1191,15 @@ export class Cpu {
                 case 0x9:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.res(2, low);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.res(3, low - 8);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low < 8) {
                         this.res(2, low);
@@ -1211,15 +1211,15 @@ export class Cpu {
                 case 0xA:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.res(4, low);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.res(5, low - 8);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low < 8) {
                         this.res(4, low);
@@ -1231,15 +1231,15 @@ export class Cpu {
                 case 0xB:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.res(6, low);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.res(7, low - 8);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low < 8) {
                         this.res(6, low);
@@ -1251,15 +1251,15 @@ export class Cpu {
                 case 0xC:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.set(0, low);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.set(1, low - 8);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low < 8) {
                         this.set(0, low);
@@ -1271,15 +1271,15 @@ export class Cpu {
                 case 0xD:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.set(2, low);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.set(3, low - 8);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low < 8) {
                         this.set(2, low);
@@ -1291,15 +1291,15 @@ export class Cpu {
                 case 0xE:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.set(4, low);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.set(5, low - 8);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low < 8) {
                         this.set(4, low);
@@ -1311,15 +1311,15 @@ export class Cpu {
                 case 0xF:
                     if (low == 0x6) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.set(6, low);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low == 0xE) {
                         let tempHLLocation = this.registers.getRegisterDouble(registerID.H, registerID.L);
-                        this.registers.setRegister(registerID.HL, this.memory.readMemory(tempHLLocation));
+                        this.registers.setRegister(registerID.HL, this.memoryController.readMemory(tempHLLocation));
                         this.set(7, low - 8);
-                        this.memory.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
+                        this.memoryController.writeMemory(tempHLLocation, this.registers.getRegister(registerID.HL));
                     }
                     else if (low < 8) {
                         this.set(6, low);
@@ -1341,12 +1341,12 @@ export class Cpu {
             //DIV Timer
             this.sysClock = this.registers.sumDouble(this.sysClock, 1);
             let upperSysClock = this.sysClock >> 8;
-            if (this.memory.io.getData(0x4) != upperSysClock) {
-                this.memory.io.setData(0x4, upperSysClock);
+            if (this.memoryController.memory.io.getData(0x4) != upperSysClock) {
+                this.memoryController.memory.io.setData(0x4, upperSysClock);
 
                 //TIMA Timer
                 let bit = 0;
-                switch (this.memory.io.getData(0x7) & 0x3) { //determines the bit to check against in DIV
+                switch (this.memoryController.memory.io.getData(0x7) & 0x3) { //determines the bit to check against in DIV
                     case 0:
                         bit = 9;
                         break;
@@ -1360,19 +1360,19 @@ export class Cpu {
                         bit = 7;
                         break;
                 }
-                let timerEnable = (this.memory.io.getData(0x7) & 0x4) >> 2;
+                let timerEnable = (this.memoryController.memory.io.getData(0x7) & 0x4) >> 2;
                 let andResultPrevious = ((this.registers.differenceDouble(this.sysClock, 1) >> bit) & 1) & timerEnable;
                 let andResult = ((this.sysClock >> bit) & 1) & timerEnable;
                 let TIMA = 0;
                 if (andResultPrevious == 1 && andResult == 0) {
-                    TIMA = this.memory.io.getData(0x5);
+                    TIMA = this.memoryController.memory.io.getData(0x5);
                     TIMA++;
                     if (TIMA > 0xFF) {//if TIMA overflows past 0xFF, request TIMA Interrupt and reset value to TIMA Modulo (0xFF07)
-                        this.memory.io.setData(0x5, this.memory.io.getData(0x6));
-                        this.memory.io.setData(0xF, this.memory.io.getData(0xF) | (1 << 2)); //Request Interrupt
+                        this.memoryController.memory.io.setData(0x5, this.memoryController.memory.io.getData(0x6));
+                        this.memoryController.memory.io.setData(0xF, this.memoryController.memory.io.getData(0xF) | (1 << 2)); //Request Interrupt
                     }
                     else {
-                        this.memory.io.setData(0x5, TIMA);
+                        this.memoryController.memory.io.setData(0x5, TIMA);
                     }
                 }
 
@@ -1411,9 +1411,9 @@ export class Cpu {
         let high = this.fetch();
         if (condition) {
             this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-            this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
+            this.memoryController.writeMemory(this.stackPointer, (this.programCounter >> 8));
             this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-            this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
+            this.memoryController.writeMemory(this.stackPointer, (this.programCounter & 0xff));
             this.programCounter = (high << 8) | low;
             this.tickClock(24);
         }
@@ -1424,9 +1424,9 @@ export class Cpu {
 
     returnConditional(condition) {
         if (condition) {
-            let low = this.memory.readMemory(this.stackPointer);
+            let low = this.memoryController.readMemory(this.stackPointer);
             this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
-            let high = this.memory.readMemory(this.stackPointer);
+            let high = this.memoryController.readMemory(this.stackPointer);
             this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
             this.programCounter = (high << 8) | low;
             this.tickClock(20);
@@ -1442,9 +1442,9 @@ export class Cpu {
         // this.programCounter = location;
 
         this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-        this.memory.writeMemory(this.stackPointer, (this.programCounter >> 8));
+        this.memoryController.writeMemory(this.stackPointer, (this.programCounter >> 8));
         this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-        this.memory.writeMemory(this.stackPointer, (this.programCounter & 0xff));
+        this.memoryController.writeMemory(this.stackPointer, (this.programCounter & 0xff));
         this.programCounter = location;
         this.tickClock(16);
     }
@@ -1452,17 +1452,17 @@ export class Cpu {
     push(register1, register2) {
         let high = this.registers.getRegister(register1);
         this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-        this.memory.writeMemory(this.stackPointer, high)
+        this.memoryController.writeMemory(this.stackPointer, high)
         let low = this.registers.getRegister(register2);
         this.stackPointer = this.registers.differenceDouble(this.stackPointer, 1);
-        this.memory.writeMemory(this.stackPointer, low)
+        this.memoryController.writeMemory(this.stackPointer, low)
         this.tickClock(16);
     }
 
     pop(register1, register2) {
-        let low = this.memory.readMemory(this.stackPointer);
+        let low = this.memoryController.readMemory(this.stackPointer);
         this.stackPointer = this.registers.sumDouble(this.stackPointer, 1);
-        let high = this.memory.readMemory(this.stackPointer);
+        let high = this.memoryController.readMemory(this.stackPointer);
         if (register2 == registerID.F) {
             low = low & 0xF0;
         }

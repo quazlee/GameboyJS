@@ -547,4 +547,9 @@ export class RegisterCollection {
     }
     //FLAG FUCNTIONS END
 
+    loadState(state){
+        for (let i = 0; i < 9; i++) {
+            this.data[i] = state.data[i];
+        }
+    }
 }

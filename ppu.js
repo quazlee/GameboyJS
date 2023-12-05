@@ -1,10 +1,10 @@
 import { twosComplement } from "./utility.js";
 import { errorHandler } from "./errorhandler.js";
-import { Memory } from "./memory.js";
+import { MemoryManager } from "./memory.js";
 
 export class Ppu {
     constructor() {
-        this.memory = null;
+        this.memoryController = null;
 
         this.frameReady = false;
 
@@ -62,7 +62,7 @@ export class Ppu {
      * @param {*} memory 
      */
     setMemory(memory) {
-        this.memory = memory;
+        this.memoryController = memory;
     }
 
     /**
@@ -175,7 +175,7 @@ export class Ppu {
      * @returns sprite height
      */
     getSpriteHeight() {
-        let spriteSize = ((this.memory.io.getData(0x40) & 0x4) >> 2);
+        let spriteSize = ((this.memoryController.memory.io.getData(0x40) & 0x4) >> 2);
         if (spriteSize) {
             return 16;
         }
@@ -206,10 +206,10 @@ export class Ppu {
 
     modeZero() {
         this.scanLineTicks += 2;
-        if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) < 143) {
+        if (this.scanLineTicks == 456 && this.memoryController.memory.io.getData(0x44) < 143) {
             this.mode = 2;
             this.scanLineTicks = 0;
-            this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
+            this.memoryController.memory.io.setData(0x44, this.memoryController.memory.io.getData(0x44) + 1);
             this.oamLocation = 0xFE00;
             this.oamBuffer = [];
             this.backgroundFetchBuffer = [];
@@ -219,12 +219,12 @@ export class Ppu {
             this.scxOffset = 0;
             this.windowXOffset = 0;
         }
-        else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 143) {
+        else if (this.scanLineTicks == 456 && this.memoryController.memory.io.getData(0x44) == 143) {
             this.mode = 1;
             this.scanLineTicks = 0;
             this.windowYOffset = 0;
-            this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
-            this.memory.io.setData(0xF, this.memory.io.getData(0xF) | 1);
+            this.memoryController.memory.io.setData(0x44, this.memoryController.memory.io.getData(0x44) + 1);
+            this.memoryController.memory.io.setData(0xF, this.memoryController.memory.io.getData(0xF) | 1);
             this.oamLocation = 0xFE00;
             this.oamBuffer = [];
             this.backgroundFetchBuffer = [];
@@ -242,14 +242,14 @@ export class Ppu {
      */
     modeOne() {
         this.scanLineTicks += 2;
-        if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) < 153) {
+        if (this.scanLineTicks == 456 && this.memoryController.memory.io.getData(0x44) < 153) {
             this.scanLineTicks = 0;
-            this.memory.io.setData(0x44, this.memory.io.getData(0x44) + 1);
+            this.memoryController.memory.io.setData(0x44, this.memoryController.memory.io.getData(0x44) + 1);
         }
-        else if (this.scanLineTicks == 456 && this.memory.io.getData(0x44) == 153) {
+        else if (this.scanLineTicks == 456 && this.memoryController.memory.io.getData(0x44) == 153) {
             this.scanLineTicks = 0;
             this.mode = 2;
-            this.memory.io.setData(0x44, 0);
+            this.memoryController.memory.io.setData(0x44, 0);
             this.frameReady = true;
             this.hasWyEqualedLy = false;
             this.renderWindow = false;
@@ -263,8 +263,8 @@ export class Ppu {
     modeTwo() {
         //Check if the current scanline is where the top of the window layer is.
         if (this.scanLineTicks == 0) {
-            let ly = this.memory.io.getData(0x44);
-            let wy = this.memory.io.getData(0x4A);
+            let ly = this.memoryController.memory.io.getData(0x44);
+            let wy = this.memoryController.memory.io.getData(0x4A);
             if (wy == ly) {
                 this.hasWyEqualedLy = true;
             }
@@ -316,23 +316,23 @@ export class Ppu {
             let spriteIndexZero = this.spritePalette & 3;
             for (let i = 0; i < 2; i++) {
                 if (this.spriteFetchBuffer.length != 0 && this.spriteFetchBuffer[0] == 4 && this.backgroundFetchBuffer.length != 0) {
-                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx);
+                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memoryController.memory.io.getData(0x44)), this.viewportCtx);
                     this.spriteFetchBuffer.shift();
                     this.backgroundPixelsRendered++;
                 }
                 else if (this.spriteFetchBuffer.length != 0 &&
                     this.backgroundFetchBuffer[0] != 0 && this.spriteFetchBuffer[0] != 4 && this.bgPriority && this.backgroundFetchBuffer.length != 0) {
-                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx);
+                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memoryController.memory.io.getData(0x44)), this.viewportCtx);
                     this.spriteFetchBuffer.shift();
                     this.backgroundPixelsRendered++;
                 }
                 else if (this.spriteFetchBuffer.length != 0 && this.backgroundFetchBuffer.length != 0) {
-                    this.spriteFetchBuffer = this.drawTile2(this.spriteFetchBuffer, this.currentOamTile.xPos - 8 - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx);
+                    this.spriteFetchBuffer = this.drawTile2(this.spriteFetchBuffer, this.currentOamTile.xPos - 8 - this.scxOffset, (this.memoryController.memory.io.getData(0x44)), this.viewportCtx);
                     this.backgroundFetchBuffer.shift();
                     this.backgroundPixelsRendered++;
                 }
                 else if (this.spriteFetchBuffer.length == 0 && this.backgroundFetchBuffer.length != 0) {
-                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memory.io.getData(0x44)), this.viewportCtx);
+                    this.backgroundFetchBuffer = this.drawTile2(this.backgroundFetchBuffer, (this.renderX * 8) - this.scxOffset, (this.memoryController.memory.io.getData(0x44)), this.viewportCtx);
                     this.backgroundPixelsRendered++;
                 }
             }
@@ -348,13 +348,13 @@ export class Ppu {
 
     backgroundFetchCycle() {
         if (this.backgroundFetchStep == 1) {
-            let scy = this.memory.io.getData(0x42);
-            let scx = this.memory.io.getData(0x43);
+            let scy = this.memoryController.memory.io.getData(0x42);
+            let scx = this.memoryController.memory.io.getData(0x43);
 
-            let lcdc = this.memory.io.getData(0x40);
+            let lcdc = this.memoryController.memory.io.getData(0x40);
             this.windowEnable = (lcdc & 0x20) >> 4;
 
-            let ly = this.memory.io.getData(0x44);
+            let ly = this.memoryController.memory.io.getData(0x44);
 
             this.checkRenderWindow();
 
@@ -372,7 +372,7 @@ export class Ppu {
                 let tileMapXOffset = ((scx / 8) + (this.backgroundFetchXPos)) & 0x1F;
                 let tileMapYOffset = ((scy + ly) & 0xFF);
 
-                this.tileNumber = this.memory.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
+                this.tileNumber = this.memoryController.readMemory(tileMapBase + tileMapXOffset + (32 * Math.floor(tileMapYOffset / 8)));
 
                 if (base == 0x8000) {
                     let address = base + (16 * this.tileNumber);
@@ -387,7 +387,7 @@ export class Ppu {
                 if ((lcdc & 0x40) >> 6) {
                     tileMapBase = 0x9C00;
                 }
-                this.tileNumber = this.memory.readMemory(tileMapBase + this.windowXOffset + (32 * Math.floor(this.windowYOffset / 8)));
+                this.tileNumber = this.memoryController.readMemory(tileMapBase + this.windowXOffset + (32 * Math.floor(this.windowYOffset / 8)));
 
                 if (base == 0x8000) {
                     let address = base + (16 * this.tileNumber);
@@ -402,20 +402,19 @@ export class Ppu {
             this.backgroundFetchStep = 2;
         }
         else if (this.backgroundFetchStep == 2) {
-            this.fetchLow = this.memory.readMemory(this.fetchAddress);
+            this.fetchLow = this.memoryController.readMemory(this.fetchAddress);
             this.backgroundFetchStep = 3;
         }
         else if (this.backgroundFetchStep == 3) {
-            this.fetchHigh = this.memory.readMemory(this.fetchAddress + 1);
+            this.fetchHigh = this.memoryController.readMemory(this.fetchAddress + 1);
             this.backgroundFetchStep = 4;
         }
         else if (this.backgroundFetchStep == 4) {
             if (this.renderX < 20 && this.backgroundFetchBuffer.length == 0) {
-                this.backgroundFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow, this.memory.readMemory(0xFF47));
+                this.backgroundFetchBuffer = this.decodeTile2(this.fetchHigh, this.fetchLow, this.memoryController.readMemory(0xFF47));
                 //TODO SUBTILE SCROLLING
                 if (this.renderX == 0) {
-
-                    let scx = this.memory.io.getData(0x43);
+                    let scx = this.memoryController.memory.io.getData(0x43);
                     this.backgroundFetchBuffer.splice(0, scx % 8);
                     this.scxOffset = scx % 8;
                 }
@@ -443,27 +442,27 @@ export class Ppu {
     spriteFetchCycle() {
         switch (this.spriteFetchStep) {
             case 1: {
-                let ly = this.memory.io.getData(0x44);
+                let ly = this.memoryController.memory.io.getData(0x44);
                 let address = 0x8000 + (16 * this.currentOamTile.tileIndex);
                 this.fetchAddress = address + (2 * (ly - (this.currentOamTile.yPos - 16)));
                 this.spriteFetchStep = 2;
                 break;
             }
             case 2:
-                this.fetchLow = this.memory.readMemory(this.fetchAddress);
+                this.fetchLow = this.memoryController.readMemory(this.fetchAddress);
                 this.spriteFetchStep = 3;
                 break;
             case 3:
-                this.fetchHigh = this.memory.readMemory(this.fetchAddress + 1);
+                this.fetchHigh = this.memoryController.readMemory(this.fetchAddress + 1);
                 this.spriteFetchStep = 4;
                 break;
             case 4:
                 if (this.backgroundFetchXPos < 20 && this.spriteFetchBuffer.length == 0) {
                     if(this.currentOamTile != null && (this.currentOamTile.attributes >> 4) & 1){
-                        this.spritePalette = this.memory.readMemory(0xFF49);
+                        this.spritePalette = this.memoryController.readMemory(0xFF49);
                     }
                     else{
-                        this.spritePalette = this.memory.readMemory(0xFF48);
+                        this.spritePalette = this.memoryController.readMemory(0xFF48);
                     }
                     this.spriteFetchBuffer = this.decodeTile2Sprite(this.fetchHigh, this.fetchLow, this.spritePalette);
                     if ((this.currentOamTile.attributes & 0x20) >> 5) {
@@ -479,7 +478,7 @@ export class Ppu {
      * Checks if the window should be rendered for the rest of the current scanline
      */
     checkRenderWindow() {
-        let wx = this.memory.io.getData(0x4B);
+        let wx = this.memoryController.memory.io.getData(0x4B);
         if (!this.renderWindow && this.windowEnable && this.hasWyEqualedLy && (this.backgroundPixelsRendered) >= (wx - 7)) {
             this.renderWindow = true;
             this.backgroundFetchStep = 1;
@@ -491,14 +490,14 @@ export class Ppu {
      * Checks if the next OAM sprite should be pushed to the buffer.
      */
     oamScan() {
-        let ly = this.memory.readMemory(0xFF44);
-        let spriteX = this.memory.readMemory(this.oamLocation + 1);
-        let spriteY = this.memory.readMemory(this.oamLocation);
+        let ly = this.memoryController.readMemory(0xFF44);
+        let spriteX = this.memoryController.readMemory(this.oamLocation + 1);
+        let spriteY = this.memoryController.readMemory(this.oamLocation);
         if ((spriteX > 0) && (ly + 16 >= spriteY) && (ly + 16 < spriteY + this.getSpriteHeight()) && (this.oamBuffer.length < 10)) {
             this.oamBuffer.push(new Sprite(spriteY,
                 spriteX,
-                this.memory.readMemory(this.oamLocation + 2),
-                this.memory.readMemory(this.oamLocation + 3),
+                this.memoryController.readMemory(this.oamLocation + 2),
+                this.memoryController.readMemory(this.oamLocation + 3),
                 this.oamLocation));
         }
         this.oamLocation += 4;
